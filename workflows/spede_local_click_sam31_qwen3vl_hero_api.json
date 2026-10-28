@@ -1,0 +1,161 @@
+{
+  "2": {
+    "class_type": "SpEdE_LocalLoadCameras",
+    "inputs": {
+      "camera_targets_npz": "/PATH/TO/camera_pack.npz"
+    }
+  },
+  "4": {
+    "class_type": "SpEdE_LocalViewImage",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0"
+    }
+  },
+  "20": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    }
+  },
+  "10": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ],
+      "positive_coords": "[{\"x\": 512, \"y\": 384}]",
+      "negative_coords": "[]",
+      "threshold": 0.5,
+      "refine_iterations": 2,
+      "individual_masks": false
+    }
+  },
+  "11": {
+    "class_type": "SpEdE_LocalFocusCrop",
+    "inputs": {
+      "image": [
+        "4",
+        0
+      ],
+      "mask": [
+        "10",
+        0
+      ],
+      "size": 448,
+      "dim": 0.35
+    }
+  },
+  "12": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "13": {
+    "class_type": "TextGenerate",
+    "inputs": {
+      "clip": [
+        "12",
+        0
+      ],
+      "prompt": "The user selected the object outlined in yellow; everything else is dimmed. Answer with the object's name only: 1 to 4 lowercase words, for example 'lego bulldozer' or 'bonsai tree in a pot'. No punctuation, no sentence.",
+      "image": [
+        "11",
+        0
+      ],
+      "max_length": 24,
+      "sampling_mode": "off",
+      "thinking": false,
+      "use_default_template": true,
+      "system_prompt": "You are a careful visual assistant. You name objects in photos precisely and briefly."
+    }
+  },
+  "14": {
+    "class_type": "SpEdE_LocalObjectName",
+    "inputs": {
+      "text": [
+        "13",
+        0
+      ]
+    }
+  },
+  "21": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "20",
+        1
+      ],
+      "text": [
+        "14",
+        0
+      ]
+    }
+  },
+  "22": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ],
+      "conditioning": [
+        "21",
+        0
+      ],
+      "threshold": 0.4,
+      "refine_iterations": 2,
+      "individual_masks": true
+    }
+  },
+  "15": {
+    "class_type": "SpEdE_LocalHeroConsistency",
+    "inputs": {
+      "image": [
+        "4",
+        0
+      ],
+      "click_mask": [
+        "10",
+        0
+      ],
+      "name_masks": [
+        "22",
+        0
+      ],
+      "name": [
+        "14",
+        0
+      ],
+      "positive_coords": "[{\"x\": 512, \"y\": 384}]",
+      "negative_coords": "[]",
+      "min_iou": 0.6,
+      "output_subdir": "spede/local/hero"
+    }
+  },
+  "16": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "15",
+        4
+      ],
+      "filename_prefix": "spede/local/hero/preview"
+    }
+  }
+}

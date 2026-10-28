@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpEdE Compare — Splat Edit Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root { --ink: #141414; --paper: #ECEBE6; --red: #D7263D; --yellow: #F4B400; --blue: #1B4F9C; }
+  html, body { margin: 0; height: 100%; background: #0d0e10; color: var(--paper); overflow: hidden;
+    font: 13px/1.4 "IBM Plex Mono", ui-monospace, monospace; }
+  #views { position: absolute; inset: 0; display: flex; }
+  .pane { position: relative; flex: 1; min-width: 0; }
+  .pane + .pane { border-left: 3px solid var(--ink); }
+  body.ab .pane.hidden { display: none; }
+  body.ab .pane + .pane { border-left: none; }
+  .tag { position: absolute; top: 12px; left: 12px; z-index: 5; display: flex; align-items: center; gap: 8px;
+    font: 700 12px/1 Jost, "Futura", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+    background: var(--paper); color: var(--ink); padding: 7px 10px 6px; pointer-events: none; }
+  .tag i { width: 10px; height: 10px; display: inline-block; }
+  #paneA .tag i { background: var(--ink); }
+  #paneB .tag i { background: var(--red); border-radius: 50%; }
+  #tools { position: absolute; right: 12px; bottom: 12px; z-index: 6; display: flex; gap: 0; }
+  #tools button { font: 700 11px/1 Jost, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+    background: var(--paper); color: var(--ink); border: 0; border-left: 2px solid var(--ink);
+    padding: 9px 12px 8px; cursor: pointer; }
+  #tools button:first-child { border-left: 0; }
+  #tools[hidden] { display: none; }
+  #tools button.on { background: var(--yellow); }
+  #tools button:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; }
+  #empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    font: 500 15px/1.5 Jost, sans-serif; letter-spacing: .06em; color: #9a9994; }
+</style>
+</head>
+<body>
+<div id="views">
+  <div class="pane" id="paneA"><div class="tag"><i></i>Original</div></div>
+  <div class="pane" id="paneB"><div class="tag"><i></i><span class="label" id="labelB">Patched</span></div></div>
+</div>
+<div id="tools">
+  <button id="side" class="on" type="button">Side by side</button>
+  <button id="ab" type="button">A/B · space</button>
+  <button id="reset" type="button">Reset view</button>
+</div>
+<script type="importmap">
+{ "imports": { "three": "/viewer/three.module.js", "@mkkellogg/gaussian-splats-3d": "/viewer/gaussian-splats-3d.module.js" } }
+</script>
+<script type="module">
+import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
+const params = new URLSearchParams(location.search);
+const run = params.get('run');
+// index.html passes b=allround once the project has an all-around result, b=replace after a Replace.
+if (params.get('b') === 'allround') document.getElementById('labelB').textContent = 'All-around';
+if (params.get('b') === 'replace') document.getElementById('labelB').textContent = 'Replaced';
+const base = `/viewer/${run}/`;
+// The export changes with the generation: the browser must not serve a cached splat.
+const bust = '?g=' + encodeURIComponent(params.get('g') || '0');
+let cam;
+// A missing export answers 404 (with a JSON error body): that is no camera, not a camera.
+try { const res = await fetch(base + 'camera.json' + bust); cam = res.ok ? await res.json() : null; } catch (e) { cam = null; }
+if (!run || !cam) {
+  document.getElementById('views').innerHTML =
+    '<div id="empty">No 3D export for this project yet.<br>It appears after the first scene change.</div>';
+  document.getElementById('tools').hidden = true;
+} else {
+  const make = (root, url) => {
+    const v = new GaussianSplats3D.Viewer({ rootElement: root, cameraUp: cam.up,
+      initialCameraPosition: cam.position, initialCameraLookAt: cam.lookAt,
+      sharedMemoryForWorkers: false, gpuAcceleratedSort: false, sphericalHarmonicsDegree: 0 });
+    // The URL carries a cache-buster, so the format cannot come from its extension.
+    v.addSplatScene(url, { format: GaussianSplats3D.SceneFormat.Splat, progressiveLoad: true, showLoadingUI: true, splatAlphaRemovalThreshold: 5 })
+      .then(() => v.start());
+    return v;
+  };
+  const panes = [document.getElementById('paneA'), document.getElementById('paneB')];
+  const viewers = [make(panes[0], base + 'original.splat'), make(panes[1], base + 'edited.splat' + bust)];
+  let driver = 1;
+  panes.forEach((p, i) => ['pointerdown', 'wheel', 'touchstart'].forEach(
+    ev => p.addEventListener(ev, () => { driver = i; }, { passive: true })));
+  (function sync() {
+    const a = viewers[driver], b = viewers[1 - driver];
+    if (a.camera && b.camera && a.controls && b.controls) {
+      b.camera.position.copy(a.camera.position); b.camera.quaternion.copy(a.camera.quaternion);
+      b.camera.up.copy(a.camera.up); b.controls.target.copy(a.controls.target); b.controls.update();
+    }
+    requestAnimationFrame(sync);
+  })();
+  let ab = false, shown = 1;
+  const layout = () => {
+    document.body.classList.toggle('ab', ab);
+    panes.forEach((p, i) => p.classList.toggle('hidden', ab && i !== shown));
+    if (ab) driver = shown;
+    document.getElementById('side').classList.toggle('on', !ab);
+    document.getElementById('ab').classList.toggle('on', ab);
+    window.dispatchEvent(new Event('resize'));
+  };
+  document.getElementById('side').onclick = () => { ab = false; layout(); };
+  const swap = () => { if (!ab) { ab = true; layout(); return; }
+    shown = 1 - shown; driver = 1 - shown; requestAnimationFrame(() => { driver = shown; layout(); }); };
+  document.getElementById('ab').onclick = swap;
+  // A narrow frame (a phone) shows one big view, A/B, instead of two slivers.
+  if (innerWidth < 600) { ab = true; layout(); }
+  addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); swap(); } });
+  document.getElementById('reset').onclick = () => viewers.forEach(v => {
+    v.camera.position.fromArray(cam.position); v.camera.up.fromArray(cam.up);
+    v.controls.target.fromArray(cam.lookAt); v.camera.lookAt(v.controls.target); v.controls.update();
+  });
+}
+</script>
+</body>
+</html>

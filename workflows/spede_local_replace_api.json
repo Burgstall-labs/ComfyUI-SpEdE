@@ -1,0 +1,431 @@
+{
+  "1": {
+    "class_type": "SpEdE_LocalLoadScene",
+    "inputs": {
+      "source_ply": "/PATH/TO/source_scene.ply"
+    }
+  },
+  "2": {
+    "class_type": "SpEdE_LocalLoadCameras",
+    "inputs": {
+      "camera_targets_npz": "/PATH/TO/camera_pack.npz"
+    }
+  },
+  "10": {
+    "inputs": {
+      "scene": [
+        "1",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "object_ply": "/PATH/TO/object_only.ply",
+      "output_path": "spede/local/replace_base.ply",
+      "device": "cuda",
+      "remove_fill_ply": "",
+      "remove_scene_ply": "",
+      "hero_image_path": ""
+    },
+    "class_type": "SpEdE_LocalReplaceBase"
+  },
+  "27": {
+    "class_type": "SpEdE_LocalViewImage",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "reference.png"
+    }
+  },
+  "30": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "31": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "32": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "33": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "34": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": [
+        "31",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ],
+      "prompt": "Add the new object to <image1> where the removed object stands in <image2>.",
+      "negative_prompt": "",
+      "resolution": 1024,
+      "images.image_1": [
+        "10",
+        1
+      ],
+      "images.image_2": [
+        "27",
+        0
+      ],
+      "images.image_3": [
+        "3",
+        0
+      ]
+    }
+  },
+  "35a": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 241101
+    }
+  },
+  "35b": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": [
+        "33",
+        0
+      ],
+      "positive": [
+        "34",
+        0
+      ],
+      "negative": [
+        "34",
+        1
+      ],
+      "cfg": 1.0
+    }
+  },
+  "35c": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "35d": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0"
+    }
+  },
+  "35": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "35a",
+        0
+      ],
+      "guider": [
+        "35b",
+        0
+      ],
+      "sampler": [
+        "35c",
+        0
+      ],
+      "sigmas": [
+        "35d",
+        0
+      ],
+      "latent_image": [
+        "34",
+        2
+      ]
+    }
+  },
+  "36": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "35",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    }
+  },
+  "84": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "20",
+        1
+      ],
+      "text": "new object"
+    }
+  },
+  "85": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "36",
+        0
+      ],
+      "conditioning": [
+        "84",
+        0
+      ],
+      "threshold": 0.4,
+      "refine_iterations": 2,
+      "individual_masks": false
+    }
+  },
+  "86": {
+    "class_type": "SpEdE_LocalObjectCutout",
+    "inputs": {
+      "image": [
+        "36",
+        0
+      ],
+      "mask": [
+        "85",
+        0
+      ],
+      "name": "new object"
+    }
+  },
+  "90": {
+    "class_type": "TripoSplatPreprocessImage",
+    "inputs": {
+      "image": [
+        "86",
+        0
+      ],
+      "mask": [
+        "86",
+        1
+      ],
+      "erode_radius": 1,
+      "size": 1024
+    }
+  },
+  "91": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "triposplat_fp16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "92": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "dino_v3_vit_h.safetensors"
+    }
+  },
+  "93": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "94": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "triposplat_vae_decoder_fp16.safetensors"
+    }
+  },
+  "95": {
+    "class_type": "TripoSplatConditioning",
+    "inputs": {
+      "clip_vision": [
+        "92",
+        0
+      ],
+      "vae": [
+        "93",
+        0
+      ],
+      "image": [
+        "90",
+        0
+      ]
+    }
+  },
+  "96": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "91",
+        0
+      ],
+      "positive": [
+        "95",
+        0
+      ],
+      "negative": [
+        "95",
+        1
+      ],
+      "latent_image": [
+        "95",
+        2
+      ],
+      "seed": 46,
+      "steps": 30,
+      "cfg": 3.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "simple",
+      "denoise": 1.0
+    }
+  },
+  "97": {
+    "class_type": "VAEDecodeTripoSplat",
+    "inputs": {
+      "samples": [
+        "96",
+        0
+      ],
+      "vae": [
+        "94",
+        0
+      ],
+      "num_gaussians": 262144,
+      "seed": 0
+    }
+  },
+  "98": {
+    "class_type": "SplatToFile3D",
+    "inputs": {
+      "splat": [
+        "97",
+        0
+      ],
+      "format": "ply"
+    }
+  },
+  "100": {
+    "class_type": "SpEdE_LocalPlaceGenerated",
+    "inputs": {
+      "scene": [
+        "1",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "object_ply": "/PATH/TO/object_only.ply",
+      "generated": [
+        "98",
+        0
+      ],
+      "inserted_image": [
+        "36",
+        0
+      ],
+      "object_mask": [
+        "86",
+        1
+      ],
+      "max_shift": 0.25,
+      "size": "match",
+      "remove_fill_ply": "",
+      "remove_scene_ply": "",
+      "output_path": "spede/local/replaced_scene.ply",
+      "device": "cuda"
+    }
+  },
+  "101": {
+    "class_type": "SpEdE_LocalRender",
+    "inputs": {
+      "scene": [
+        "100",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "device": "cuda"
+    }
+  },
+  "42": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "36",
+        0
+      ],
+      "filename_prefix": "spede/local/replace_qwen"
+    }
+  },
+  "43": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "101",
+        0
+      ],
+      "filename_prefix": "spede/local/replace_render"
+    }
+  },
+  "44": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "10",
+        1
+      ],
+      "filename_prefix": "spede/local/replace_clean_hero"
+    }
+  },
+  "87": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "86",
+        2
+      ],
+      "filename_prefix": "spede/local/replace_cutout"
+    }
+  }
+}

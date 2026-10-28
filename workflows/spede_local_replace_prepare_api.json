@@ -1,0 +1,557 @@
+{
+  "1": {
+    "class_type": "SpEdE_LocalLoadScene",
+    "inputs": {
+      "source_ply": "/PATH/TO/source_scene.ply"
+    }
+  },
+  "2": {
+    "class_type": "SpEdE_LocalLoadCameras",
+    "inputs": {
+      "camera_targets_npz": "/PATH/TO/camera_pack.npz"
+    }
+  },
+  "3": {
+    "class_type": "SpEdE_LocalCameraImages",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    }
+  },
+  "21": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "20",
+        1
+      ],
+      "text": "the object to remove"
+    }
+  },
+  "22": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "3",
+        0
+      ],
+      "conditioning": [
+        "21",
+        0
+      ],
+      "threshold": 0.4,
+      "refine_iterations": 2,
+      "individual_masks": true
+    }
+  },
+  "23": {
+    "class_type": "SpEdE_LocalMasksToReport",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ],
+      "masks": [
+        "22",
+        0
+      ],
+      "boxes": [
+        "22",
+        1
+      ],
+      "view_ids_json": [
+        "3",
+        1
+      ],
+      "hero_view_id": "camera_0",
+      "output_subdir": "spede/local/masks"
+    }
+  },
+  "24": {
+    "class_type": "SpEdE_LocalSelectMultiView",
+    "inputs": {
+      "scene": [
+        "1",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "segment_report_json": [
+        "23",
+        0
+      ],
+      "hero_mask_png": [
+        "23",
+        1
+      ],
+      "output_subdir": "spede/local/selection",
+      "include_footprint": true,
+      "device": "cuda"
+    }
+  },
+  "25": {
+    "class_type": "SpEdE_LocalRemove",
+    "inputs": {
+      "selection": [
+        "24",
+        0
+      ],
+      "output_path": "spede/local/removed_scene.ply"
+    }
+  },
+  "26": {
+    "class_type": "SpEdE_LocalRender",
+    "inputs": {
+      "scene": [
+        "25",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "device": "cuda"
+    }
+  },
+  "27": {
+    "class_type": "SpEdE_LocalRender",
+    "inputs": {
+      "scene": [
+        "1",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "device": "cuda"
+    }
+  },
+  "30": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "31": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "32": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "33": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "34": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": [
+        "31",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ],
+      "images.image_1": [
+        "27",
+        0
+      ],
+      "prompt": "Use <image1> as the authoritative original camera image. Remove the segmented foreground object from <image1>. Use <image2>, a Gaussian-splat render of the same camera after that object was removed, as evidence of the real background and missing regions. Reconstruct only the background hidden by the removed object, preserving original perspective, surfaces, illumination, and all other original pixels. Do not recreate the removed object. The resulting image must retain the same camera geometry as <image1>.",
+      "negative_prompt": "",
+      "resolution": 0,
+      "images.image_2": [
+        "26",
+        0
+      ]
+    }
+  },
+  "35": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "33",
+        0
+      ],
+      "positive": [
+        "34",
+        0
+      ],
+      "negative": [
+        "34",
+        1
+      ],
+      "latent_image": [
+        "34",
+        2
+      ],
+      "seed": 241007,
+      "steps": 25,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1
+    }
+  },
+  "36": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "35",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ]
+    }
+  },
+  "41": {
+    "class_type": "SpEdE_LocalPatchQA",
+    "inputs": {
+      "patched_scene": [
+        "64",
+        0
+      ],
+      "selection": [
+        "24",
+        0
+      ],
+      "target_image": [
+        "36",
+        0
+      ],
+      "view_id": "camera_0"
+    }
+  },
+  "42": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "36",
+        0
+      ],
+      "filename_prefix": "SpEdE/qwen21_edit"
+    }
+  },
+  "43": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "41",
+        2
+      ],
+      "filename_prefix": "SpEdE/patched_render"
+    }
+  },
+  "44": {
+    "class_type": "SpEdE_LocalSaveScene",
+    "inputs": {
+      "scene": [
+        "64",
+        0
+      ],
+      "output_path": "spede/local/depth_patch_final.ply"
+    }
+  },
+  "45": {
+    "class_type": "SpEdE_LocalHeldoutQA",
+    "inputs": {
+      "source_scene": [
+        "1",
+        0
+      ],
+      "patched_scene": [
+        "64",
+        0
+      ],
+      "selection": [
+        "24",
+        0
+      ],
+      "maximum_mean_abs": 0.03,
+      "maximum_changed_fraction": 0.07,
+      "max_views": 4
+    }
+  },
+  "60": {
+    "class_type": "SpEdE_LocalCameraFOV",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0"
+    }
+  },
+  "61": {
+    "class_type": "LoadMoGeModel",
+    "inputs": {
+      "model_name": "moge_3_vitl_fp16.safetensors"
+    }
+  },
+  "62": {
+    "class_type": "MoGeInference",
+    "inputs": {
+      "moge_model": [
+        "61",
+        0
+      ],
+      "image": [
+        "36",
+        0
+      ],
+      "resolution_level": 7,
+      "fov_x_degrees": [
+        "60",
+        0
+      ],
+      "batch_size": 1,
+      "force_projection": true,
+      "apply_mask": false,
+      "refine_steps": 3
+    }
+  },
+  "63": {
+    "class_type": "SpEdE_LocalAlignMoGeDepth",
+    "inputs": {
+      "moge_geometry": [
+        "62",
+        0
+      ],
+      "removed_scene": [
+        "25",
+        0
+      ],
+      "selection": [
+        "24",
+        0
+      ],
+      "view_id": "camera_0",
+      "plane_prior": "auto",
+      "ring_px": 32,
+      "output_subdir": "spede/local/depth"
+    }
+  },
+  "64": {
+    "class_type": "SpEdE_LocalPatchFromDepth",
+    "inputs": {
+      "removed_scene": [
+        "25",
+        0
+      ],
+      "selection": [
+        "24",
+        0
+      ],
+      "edited_image": [
+        "36",
+        0
+      ],
+      "aligned_depth": [
+        "63",
+        0
+      ],
+      "view_id": "camera_0",
+      "output_path": "spede/local/depth_patch_scene.ply",
+      "pixel_stride": 4,
+      "clear_contact": true
+    }
+  },
+  "65": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "63",
+        1
+      ],
+      "filename_prefix": "spede/local/aligned_moge_depth"
+    }
+  },
+  "80": {
+    "class_type": "SpEdE_LocalRender",
+    "inputs": {
+      "scene": [
+        "64",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "view_id": "camera_0",
+      "device": "cuda"
+    }
+  },
+  "81": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": [
+        "31",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ],
+      "images.image_1": [
+        "80",
+        0
+      ],
+      "images.image_2": [
+        "27",
+        0
+      ],
+      "prompt": "Add a red armchair in the foreground location where the previously removed chair stood. Use <image1> as the authoritative cleared scene and <image2> only as a reference for the original perspective and size. Maintain the original viewpoint, perspective, lighting, material fidelity and floor contact. Make the new armchair look physically grounded with a subtle contact shadow. Leave all other pixels unchanged.",
+      "negative_prompt": "",
+      "resolution": 0
+    }
+  },
+  "82": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "33",
+        0
+      ],
+      "positive": [
+        "81",
+        0
+      ],
+      "negative": [
+        "81",
+        1
+      ],
+      "latent_image": [
+        "81",
+        2
+      ],
+      "seed": 241008,
+      "steps": 25,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1
+    }
+  },
+  "83": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "82",
+        0
+      ],
+      "vae": [
+        "32",
+        0
+      ]
+    }
+  },
+  "84": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "20",
+        1
+      ],
+      "text": "red armchair"
+    }
+  },
+  "85": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "83",
+        0
+      ],
+      "conditioning": [
+        "84",
+        0
+      ],
+      "threshold": 0.5,
+      "refine_iterations": 2,
+      "individual_masks": false
+    }
+  },
+  "86": {
+    "class_type": "SpEdE_LocalPrepareReplace",
+    "inputs": {
+      "selection": [
+        "24",
+        0
+      ],
+      "edited_image": [
+        "83",
+        0
+      ],
+      "clean_background_image": [
+        "80",
+        0
+      ],
+      "new_object_mask": [
+        "85",
+        0
+      ],
+      "view_id": "camera_0",
+      "output_subdir": "spede/local/replace_prep",
+      "scale_multiplier": 1
+    }
+  },
+  "87": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "86",
+        0
+      ],
+      "filename_prefix": "spede/local/replace_object"
+    }
+  },
+  "88": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "83",
+        0
+      ],
+      "filename_prefix": "spede/local/replace_scene_insertion"
+    }
+  }
+}

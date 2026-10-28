@@ -1,0 +1,363 @@
+{
+  "files": [
+    {
+      "target": ".github/workflows/cpu-tests.yml",
+      "source": "competition/ci/cpu-tests.yml"
+    },
+    {
+      "target": ".gitignore",
+      "source": "competition/gitignore"
+    },
+    {
+      "target": "README.md",
+      "source": "competition/README.md"
+    },
+    {
+      "target": "__init__.py",
+      "source": "competition/__init__.py"
+    },
+    {
+      "target": "docs/ALLROUND_FILL.md",
+      "source": "docs/ALLROUND_FILL.md"
+    },
+    {
+      "target": "docs/DEPTH_FILL_V2.md",
+      "source": "docs/DEPTH_FILL_V2.md"
+    },
+    {
+      "target": "docs/REPLACE_V1.md",
+      "source": "docs/REPLACE_V1.md"
+    },
+    {
+      "target": "examples/make_demo_fixture.py",
+      "source": "scripts/make_demo_fixture.py"
+    },
+    {
+      "target": "examples/outputs/README.md",
+      "source": "competition/examples/outputs/README.md"
+    },
+    {
+      "target": "examples/outputs/bonsai/README.md",
+      "source": "competition/examples/outputs/bonsai/README.md"
+    },
+    {
+      "target": "examples/outputs/bonsai/depth_preview.png",
+      "source": "competition/examples/outputs/bonsai/depth_preview.png"
+    },
+    {
+      "target": "examples/outputs/bonsai/gates.json",
+      "source": "competition/examples/outputs/bonsai/gates.json"
+    },
+    {
+      "target": "examples/outputs/bonsai/hero_clean.png",
+      "source": "competition/examples/outputs/bonsai/hero_clean.png"
+    },
+    {
+      "target": "examples/outputs/bonsai/patched_render.png",
+      "source": "competition/examples/outputs/bonsai/patched_render.png"
+    },
+    {
+      "target": "examples/outputs/bonsai/progressive_sheet.png",
+      "source": "competition/examples/outputs/bonsai/progressive_sheet.png"
+    },
+    {
+      "target": "examples/outputs/bonsai/qwen_edit.png",
+      "source": "competition/examples/outputs/bonsai/qwen_edit.png"
+    },
+    {
+      "target": "examples/outputs/bonsai/timings.json",
+      "source": "competition/examples/outputs/bonsai/timings.json"
+    },
+    {
+      "target": "examples/outputs/kitchen/README.md",
+      "source": "competition/examples/outputs/kitchen/README.md"
+    },
+    {
+      "target": "examples/outputs/kitchen/depth_preview.png",
+      "source": "competition/examples/outputs/kitchen/depth_preview.png"
+    },
+    {
+      "target": "examples/outputs/kitchen/gates.json",
+      "source": "competition/examples/outputs/kitchen/gates.json"
+    },
+    {
+      "target": "examples/outputs/kitchen/hero_clean.png",
+      "source": "competition/examples/outputs/kitchen/hero_clean.png"
+    },
+    {
+      "target": "examples/outputs/kitchen/patched_render.png",
+      "source": "competition/examples/outputs/kitchen/patched_render.png"
+    },
+    {
+      "target": "examples/outputs/kitchen/progressive_sheet.png",
+      "source": "competition/examples/outputs/kitchen/progressive_sheet.png"
+    },
+    {
+      "target": "examples/outputs/kitchen/qwen_edit.png",
+      "source": "competition/examples/outputs/kitchen/qwen_edit.png"
+    },
+    {
+      "target": "examples/outputs/kitchen/timings.json",
+      "source": "competition/examples/outputs/kitchen/timings.json"
+    },
+    {
+      "target": "geometry_cli.py",
+      "source": "competition/geometry_cli.py"
+    },
+    {
+      "target": "gpu_smoke.py",
+      "source": "competition/gpu_smoke.py"
+    },
+    {
+      "target": "local_sdk.py",
+      "source": "competition/local_sdk.py"
+    },
+    {
+      "target": "nodes.py",
+      "source": "competition/nodes.py"
+    },
+    {
+      "target": "pytest.ini",
+      "source": "competition/pytest.ini"
+    },
+    {
+      "target": "spede_assets.py",
+      "source": "spede_assets.py"
+    },
+    {
+      "target": "spede_core/__init__.py",
+      "source": "spede_core/__init__.py"
+    },
+    {
+      "target": "spede_core/colmap_import.py",
+      "source": "spede_core/colmap_import.py"
+    },
+    {
+      "target": "spede_core/depth_clean.py",
+      "source": "spede_core/depth_clean.py"
+    },
+    {
+      "target": "spede_core/depth_fill.py",
+      "source": "spede_core/depth_fill.py"
+    },
+    {
+      "target": "spede_core/floater_cleanup.py",
+      "source": "spede_core/floater_cleanup.py"
+    },
+    {
+      "target": "spede_core/geometry_utils.py",
+      "source": "spede_core/geometry_utils.py"
+    },
+    {
+      "target": "spede_core/hero_check.py",
+      "source": "spede_core/hero_check.py"
+    },
+    {
+      "target": "spede_core/imageio.py",
+      "source": "spede_core/imageio.py"
+    },
+    {
+      "target": "spede_core/multiview_fill.py",
+      "source": "spede_core/multiview_fill.py"
+    },
+    {
+      "target": "spede_core/object_extract.py",
+      "source": "spede_core/object_extract.py"
+    },
+    {
+      "target": "spede_core/patch.py",
+      "source": "spede_core/patch.py"
+    },
+    {
+      "target": "spede_core/ply.py",
+      "source": "spede_core/ply.py"
+    },
+    {
+      "target": "spede_core/progressive_fill.py",
+      "source": "spede_core/progressive_fill.py"
+    },
+    {
+      "target": "spede_core/quality.py",
+      "source": "spede_core/quality.py"
+    },
+    {
+      "target": "spede_core/removal.py",
+      "source": "spede_core/removal.py"
+    },
+    {
+      "target": "spede_core/renderer.py",
+      "source": "spede_core/renderer.py"
+    },
+    {
+      "target": "spede_core/replace.py",
+      "source": "spede_core/replace.py"
+    },
+    {
+      "target": "spede_core/replace_place.py",
+      "source": "spede_core/replace_place.py"
+    },
+    {
+      "target": "spede_core/roi.py",
+      "source": "spede_core/roi.py"
+    },
+    {
+      "target": "spede_core/selection.py",
+      "source": "spede_core/selection.py"
+    },
+    {
+      "target": "spede_core/splat_export.py",
+      "source": "spede_core/splat_export.py"
+    },
+    {
+      "target": "spede_core/support_trim.py",
+      "source": "spede_core/support_trim.py"
+    },
+    {
+      "target": "spede_core/surface_fill.py",
+      "source": "spede_core/surface_fill.py"
+    },
+    {
+      "target": "spede_core/surface_rescue.py",
+      "source": "spede_core/surface_rescue.py"
+    },
+    {
+      "target": "spede_core/view_planner.py",
+      "source": "spede_core/view_planner.py"
+    },
+    {
+      "target": "spede_core/view_rank.py",
+      "source": "spede_core/view_rank.py"
+    },
+    {
+      "target": "spede_core/visual_hull.py",
+      "source": "spede_core/visual_hull.py"
+    },
+    {
+      "target": "studio/comfy_backend.py",
+      "source": "competition/studio/comfy_backend.py"
+    },
+    {
+      "target": "studio/compare.html",
+      "source": "competition/studio/compare.html"
+    },
+    {
+      "target": "studio/config.example.json",
+      "source": "competition/studio/config.example.json"
+    },
+    {
+      "target": "studio/explore.html",
+      "source": "competition/studio/explore.html"
+    },
+    {
+      "target": "studio/gpu_turn.py",
+      "source": "competition/studio/gpu_turn.py"
+    },
+    {
+      "target": "studio/index.html",
+      "source": "competition/studio/index.html"
+    },
+    {
+      "target": "studio/requirements.txt",
+      "source": "competition/studio/requirements.txt"
+    },
+    {
+      "target": "studio/server.py",
+      "source": "competition/studio/server.py"
+    },
+    {
+      "target": "tests/conftest.py",
+      "source": "tests/conftest.py"
+    },
+    {
+      "target": "tests/test_allround_sdk_cpu.py",
+      "source": "tests/test_allround_sdk_cpu.py"
+    },
+    {
+      "target": "tests/test_competition_cpu.py",
+      "source": "tests/test_competition_cpu.py"
+    },
+    {
+      "target": "tests/test_depth_fill_cpu.py",
+      "source": "tests/test_depth_fill_cpu.py"
+    },
+    {
+      "target": "tests/test_instance_pick_cpu.py",
+      "source": "tests/test_instance_pick_cpu.py"
+    },
+    {
+      "target": "tests/test_multiview_fill_cpu.py",
+      "source": "tests/test_multiview_fill_cpu.py"
+    },
+    {
+      "target": "tests/test_replace_cpu.py",
+      "source": "tests/test_replace_cpu.py"
+    },
+    {
+      "target": "tests/test_replace_place_cpu.py",
+      "source": "tests/test_replace_place_cpu.py"
+    },
+    {
+      "target": "tests/test_spede_ui_cpu.py",
+      "source": "tests/test_spede_ui_cpu.py"
+    },
+    {
+      "target": "tests/test_surface_fill_cpu.py",
+      "source": "tests/test_surface_fill_cpu.py"
+    },
+    {
+      "target": "workflows/manifest.json",
+      "source": "competition/workflows/manifest.json"
+    },
+    {
+      "target": "workflows/spede_local_allround_hero_api.json",
+      "source": "competition/workflows/spede_local_allround_hero_api.json"
+    },
+    {
+      "target": "workflows/spede_local_allround_progressive_api.json",
+      "source": "competition/workflows/spede_local_allround_progressive_api.json"
+    },
+    {
+      "target": "workflows/spede_local_allround_stage1_api.json",
+      "source": "competition/workflows/spede_local_allround_stage1_api.json"
+    },
+    {
+      "target": "workflows/spede_local_allround_stage2_api.json",
+      "source": "competition/workflows/spede_local_allround_stage2_api.json"
+    },
+    {
+      "target": "workflows/spede_local_click_sam31_qwen3vl_hero_api.json",
+      "source": "competition/workflows/spede_local_click_sam31_qwen3vl_hero_api.json"
+    },
+    {
+      "target": "workflows/spede_local_replace_api.json",
+      "source": "competition/workflows/spede_local_replace_api.json"
+    },
+    {
+      "target": "workflows/spede_local_replace_prepare_api.json",
+      "source": "competition/workflows/spede_local_replace_prepare_api.json"
+    },
+    {
+      "target": "workflows/spede_local_sam31_extract_api.json",
+      "source": "competition/workflows/spede_local_sam31_extract_api.json"
+    },
+    {
+      "target": "workflows/spede_local_sam31_qwen21_moge3_depthfill_api.json",
+      "source": "competition/workflows/spede_local_sam31_qwen21_moge3_depthfill_api.json"
+    },
+    {
+      "target": "workflows/spede_local_sam31_qwen21_patch_api.json",
+      "source": "competition/workflows/spede_local_sam31_qwen21_patch_api.json"
+    }
+  ],
+  "no_accgs_imports": true,
+  "required_packages": [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "Pillow>=10",
+    "plyfile>=1.1",
+    "gsplat>=1.5"
+  ],
+  "models_included": false,
+  "gpu_verified": "RTX 5090, ComfyUI 0.41.0: depth fill bonsai+kitchen 17-18 Oct 2026; progressive all-around 21 Oct 2026 (see docs/)",
+  "license": "AGPL-3.0-or-later"
+}

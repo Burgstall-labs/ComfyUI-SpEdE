@@ -1,0 +1,41 @@
+SpEdE — SplatEditEngine (local competition node pack)
+Copyright 2026 Burgstall Labs (https://github.com/Burgstall-labs)
+
+This node pack is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your option)
+any later version. See LICENSE.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+Scope
+
+This pack contains: the SpEdE Local ComfyUI custom nodes (nodes.py), the
+spede_core engine, the SpEdE web UI (studio/), the geometry helpers
+(geometry_cli.py), the Comfy SDK v2 runner (local_sdk.py), the ComfyUI
+workflow graphs (workflows/), the GPU smoke script, the tests and the
+examples (the fixture generator and example outputs). Model weights and
+scenes are NOT included.
+
+The AGPL-3.0 license covers only the files in this pack authored by
+Burgstall Labs.
+
+The engine files in spede_core/ that were ported from
+Burgstall-labs/Splatedit@cb8ccb665162037da1d991d9a77ab677c70a3612 are
+released under AGPL-3.0-or-later by the copyright holder's (Burgstall Labs)
+decision of 2026-10-08.
+
+Burgstall Labs' other software (including AccGS, Splatedit and the full
+Splatedit Studio, of which the SpEdE UI is the open subset) is NOT part of
+this release and is not licensed by it. Burgstall Labs may license its own
+code separately under other terms; licensing inquiries:
+howdy@theaiwrangler.com
+
+Third-party software, model weights, ComfyUI core and other custom nodes,
+datasets and other components that this pack uses, calls or refers to keep
+their own licenses; see THIRD_PARTY.md. Nothing here grants rights to them.
+An output keeps every restriction of the models, weights, datasets and inputs
+it was made with.

@@ -1,0 +1,6 @@
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2
+httpx>=0.27
+comfy-sdk==0.4.0
+comfy-api-proxy==0.1.6

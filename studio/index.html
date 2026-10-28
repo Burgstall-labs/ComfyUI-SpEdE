@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SpEdE — Splat Edit Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --paper: #ECEBE6; --paper-2: #E0DFD9; --paper-3: #D3D2CB; --ink: #141414; --ink-2: #4A4A47; --muted: #7C7B76;
+  --red: #D7263D; --yellow: #F4B400; --blue: #1B4F9C; --line: #141414; --good: #1F7A4D; --bad: #D7263D;
+  --display: "Jost", "Futura", "Century Gothic", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  --rail: 68px; --bar: 56px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151617; --paper-2: #1F2022; --paper-3: #2A2B2E; --ink: #ECEBE6; --ink-2: #BDBCB6; --muted: #86857F;
+    --red: #EE4257; --yellow: #F6C231; --blue: #5B8BDB; --line: #ECEBE6; --good: #4CC38A; --bad: #EE4257;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151617; --paper-2: #1F2022; --paper-3: #2A2B2E; --ink: #ECEBE6; --ink-2: #BDBCB6; --muted: #86857F;
+  --red: #EE4257; --yellow: #F6C231; --blue: #5B8BDB; --line: #ECEBE6; --good: #4CC38A; --bad: #EE4257;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+img { max-width: 100%; display: block; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 700 11px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+[hidden] { display: none !important; }
+
+/* ---------- frame ---------- */
+.app { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr) auto; grid-template-rows: var(--bar) minmax(0, 1fr) auto; height: 100%; }
+header.top { grid-column: 1 / -1; display: flex; align-items: stretch; border-bottom: 3px solid var(--line); min-width: 0; }
+.brand { width: var(--rail); display: grid; place-items: center; border-right: 3px solid var(--line); flex: none; }
+.brand svg { width: 38px; height: 38px; }
+.projtitle { display: flex; align-items: center; gap: 14px; padding-inline: 18px; min-width: 0; }
+.projtitle b { font: 800 16px/1 var(--display); letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; }
+.projtitle span { font: 400 12px/1.2 var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbtn { border: 0; border-left: 3px solid var(--line); background: none; cursor: pointer; padding: 0 18px;
+  font: 700 11px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+.topbtn:hover { background: var(--paper-2); }
+.topbtn[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+.spacer { flex: 1; }
+.jobchip { display: flex; align-items: center; gap: 10px; padding-inline: 18px; border-left: 3px solid var(--line); font: 500 12px/1 var(--mono); white-space: nowrap; }
+.jobchip .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); flex: none; }
+.jobchip.busy .dot { background: var(--yellow); animation: pulse 1.2s ease-in-out infinite; }
+.jobchip.fail .dot { background: var(--red); }
+.jobchip.down .dot { background: var(--red); }
+@keyframes pulse { 50% { transform: scale(.5); } }
+
+/* ---------- tool rail ---------- */
+nav.rail { border-right: 3px solid var(--line); display: flex; flex-direction: column; overflow-y: auto; }
+.tool { position: relative; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 22%, transparent); background: none;
+  height: 68px; width: 100%; cursor: pointer; display: grid; place-items: center; }
+.tool svg { width: 30px; height: 30px; }
+.tool:hover { background: var(--paper-2); }
+.tool[aria-pressed="true"] { background: var(--ink); }
+.tool[aria-pressed="true"] svg * { stroke: var(--paper); }
+.tool[aria-pressed="true"] svg .fill-ink { fill: var(--paper); }
+.tool[aria-disabled="true"] { opacity: .28; cursor: not-allowed; }
+#tip { position: fixed; z-index: 100; max-width: 260px; background: var(--ink); color: var(--paper); padding: 8px 10px 7px;
+  font: 500 12px/1.35 var(--body); pointer-events: none; box-shadow: 4px 4px 0 var(--red); }
+#tip b { display: block; font: 800 11px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px; }
+.tool .done { position: absolute; right: 9px; top: 9px; width: 8px; height: 8px; background: var(--good); border-radius: 50%; }
+
+/* ---------- stage ---------- */
+main.stage { min-width: 0; min-height: 0; overflow-y: auto; padding-inline: clamp(16px, 3vw, 36px); padding-block: 24px 40px; }
+.stagehead { display: flex; justify-content: space-between; align-items: end; gap: 18px; flex-wrap: wrap; }
+.stagehead h1 { margin: 4px 0 0; font: 800 clamp(30px, 4.4vw, 56px)/.95 var(--display); text-transform: uppercase; text-wrap: balance; }
+.stagehead p { margin: 10px 0 0; color: var(--ink-2); max-width: 62ch; }
+.canvaswrap { margin-top: 22px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 24px; align-items: start; }
+.canvas { position: relative; border: 3px solid var(--line); background: #0d0e10; aspect-ratio: 1; max-height: calc(100vh - 290px); width: 100%; max-width: calc(100vh - 290px); justify-self: center; }
+.canvas.wide { aspect-ratio: 16 / 9; max-width: none; }
+.canvas img, .canvas canvas, .canvas iframe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border: 0; }
+.canvas .clicks { cursor: crosshair; }
+.canvas .badge { position: absolute; left: 10px; top: 10px; z-index: 3; background: var(--paper); color: var(--ink);
+  font: 700 11px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; padding: 7px 9px 6px; }
+.canvas .wait { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(13, 14, 16, .72); color: #ECEBE6; z-index: 4;
+  text-align: center; font: 500 14px/1.5 var(--display); letter-spacing: .06em; }
+.canvas .wait svg { width: 64px; height: 64px; margin: 0 auto 12px; animation: spin 2.4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.side { display: grid; gap: 16px; align-content: start; }
+.card { border: 3px solid var(--line); padding: 16px; display: grid; gap: 12px; }
+.card h3 { margin: 0; font: 800 14px/1.1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+.card p { margin: 0; font-size: 13px; color: var(--ink-2); }
+.field { display: grid; gap: 6px; }
+.field label { font: 700 11px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+.field input[type=text] { border: 3px solid var(--line); background: var(--paper); padding: 10px 11px; font-size: 15px; width: 100%; }
+.field .hint, .hint { font-size: 12px; color: var(--muted); }
+.seg { display: inline-flex; border: 3px solid var(--line); flex-wrap: nowrap; max-width: 100%; }
+.seg button { border: 0; border-left: 3px solid var(--line); background: none; padding: 8px 12px 7px; cursor: pointer;
+  font: 700 11px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.btn { border: 0; padding: 14px 18px 13px; cursor: pointer; font: 800 13px/1 var(--display); letter-spacing: .16em; text-transform: uppercase;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+.btn.primary { background: var(--red); color: #fff; }
+.btn.primary:hover { background: var(--ink); color: var(--paper); }
+.btn.secondary { background: none; border: 3px solid var(--line); padding: 11px 16px 10px; color: var(--ink); }
+.btn.secondary:hover { background: var(--paper-2); }
+.btn.blue { background: var(--blue); color: #fff; }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choice button { border: 3px solid var(--line); background: var(--paper); cursor: pointer; padding: 14px 12px; text-align: left; display: grid; gap: 8px; }
+.choice button svg { width: 34px; height: 34px; }
+.choice button b { font: 800 14px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+.choice button:disabled { opacity: .45; cursor: wait; }
+.choice button span { font-size: 12px; color: var(--ink-2); }
+.choice button:hover { background: var(--paper-2); }
+.msg { font-size: 13px; color: var(--ink-2); min-height: 1.5em; }
+.msg.err { color: var(--bad); }
+
+/* ---------- stepper ---------- */
+footer.steps { grid-column: 2 / 3; border-top: 3px solid var(--line); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.step { border: 0; border-left: 3px solid var(--line); background: none; padding: 10px 12px 9px; text-align: left; display: grid; grid-template-columns: 26px 1fr; gap: 2px 10px; align-items: center; cursor: pointer; min-width: 0; }
+.step:first-child { border-left: 0; }
+.step svg { width: 26px; height: 26px; }
+.step > span:first-child { grid-row: span 2; display: grid; }
+.step > span:last-child { grid-column: 2; min-width: 0; }
+.step b em { font-style: normal; }
+.step b { font: 800 12px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step span { font: 400 11px/1.2 var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step.now { background: var(--yellow); color: #141414; }
+.step.now span { color: #141414; }
+.step.done b::after { content: " ✓"; color: var(--good); }
+.step[aria-disabled="true"] { cursor: default; opacity: .55; }
+
+/* ---------- drawer ---------- */
+aside.drawer { grid-row: 2 / 4; grid-column: 3; border-left: 3px solid var(--line); width: 360px; overflow-y: auto; background: var(--paper); }
+aside.drawer .dhead { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 3px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 2; }
+aside.drawer .dhead b { font: 800 13px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+.x { border: 0; background: none; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; }
+.x svg { width: 16px; height: 16px; }
+.plist { list-style: none; margin: 0; padding: 0; }
+.plist li button { width: 100%; display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; text-align: left; border: 0; background: none; padding: 10px 16px; cursor: pointer;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 20%, transparent); }
+.plist li button:hover { background: var(--paper-2); }
+.plist li button[aria-current="true"] { background: var(--ink); color: var(--paper); }
+.plist img, .plist .ph { width: 52px; height: 40px; object-fit: cover; background: var(--paper-2); }
+.plist .t { display: block; font: 600 13px/1.25 var(--body); overflow-wrap: anywhere; }
+.plist .m { display: block; }
+.ptoggle { border: 0; background: none; cursor: pointer; padding: 10px 16px 14px; font: 500 12px/1.3 var(--mono); color: var(--muted); text-decoration: underline; text-align: left; }
+.plist .m { font: 400 11px/1.3 var(--mono); color: var(--muted); }
+.plist li button[aria-current="true"] .m { color: color-mix(in srgb, var(--paper) 70%, transparent); }
+.dsec { padding: 14px 16px; border-bottom: 3px solid var(--line); display: grid; gap: 10px; }
+.newgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.newgrid button { border: 3px solid var(--line); background: var(--paper); padding: 0; cursor: pointer; text-align: left; }
+.newgrid button[aria-pressed="true"] { outline: 5px solid var(--red); outline-offset: -3px; }
+.newgrid img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.newgrid b { display: block; padding: 7px 8px 6px; font: 800 12px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; border-top: 3px solid var(--line); }
+
+/* ---------- gallery, metrics ---------- */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; align-content: start; }
+figure { margin: 0; }
+figure img { width: 100%; background: var(--paper-2); border: 2px solid var(--line); cursor: zoom-in; }
+figcaption { font: 400 11px/1.35 var(--mono); color: var(--muted); margin-top: 5px; }
+dl.metrics { margin: 0; display: grid; grid-template-columns: auto 1fr; border-top: 2px solid var(--line); align-content: start; }
+dl.metrics dt, dl.metrics dd { margin: 0; padding: 7px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 20%, transparent); }
+dl.metrics dt { font: 500 12px/1.3 var(--body); color: var(--ink-2); padding-right: 12px; }
+dl.metrics dd { font: 500 12.5px/1.3 var(--mono); text-align: right; overflow-wrap: anywhere; }
+.pill { display: inline-flex; align-items: center; font: 700 11px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; padding: 6px 9px 5px; }
+.pill.ok { background: var(--good); color: #fff; } .pill.no { background: var(--bad); color: #fff; } .pill.neutral { background: var(--paper-2); }
+.empty { color: var(--muted); font-size: 13px; }
+
+details.more { border-top: 2px solid var(--line); padding-top: 2px; }
+details.more > summary { cursor: pointer; font: 700 11px/1 var(--display); letter-spacing: .16em; text-transform: uppercase; padding: 9px 0 7px; color: var(--ink-2); }
+details.more[open] > summary { margin-bottom: 6px; }
+details.more > * + * { margin-top: 8px; }
+.brand { cursor: pointer; }
+dialog.lb { border: 3px solid var(--line); padding: 0; background: var(--paper); max-width: 94vw; max-height: 92vh; }
+dialog.lb img { max-width: 92vw; max-height: 84vh; width: auto; cursor: zoom-out; }
+dialog.lb::backdrop { background: rgba(10, 10, 10, .78); }
+dialog.lb p { margin: 0; padding: 8px 12px; font: 400 12px/1.3 var(--mono); border-top: 3px solid var(--line); }
+
+/* ---------- banner: the last failure ---------- */
+.banner { margin-top: 18px; border: 3px solid var(--red); background: var(--paper-2); padding: 12px 14px; display: flex; gap: 16px;
+  justify-content: space-between; align-items: start; flex-wrap: wrap; }
+.banner b { display: block; font: 800 13px/1.3 var(--display); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.banner pre { margin: 0; white-space: pre-wrap; font: 400 12px/1.4 var(--mono); max-width: 90ch; color: var(--ink-2); }
+.banner .row { display: flex; gap: 8px; flex: none; }
+
+/* ---------- main area: result · cameras ---------- */
+.vtabs { display: flex; border: 3px solid var(--line); border-bottom: 0; width: fit-content; max-width: 100%; }
+.vtabs button { border: 0; border-right: 3px solid var(--line); background: var(--paper); color: var(--ink); font: 800 11px/1 var(--display);
+  letter-spacing: .14em; text-transform: uppercase; padding: 9px 14px 8px; cursor: pointer; }
+.vtabs button:last-child { border-right: 0; }
+.vtabs button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.vtabs button:disabled { opacity: .35; cursor: default; }
+.mainarea { min-width: 0; display: grid; align-content: start; }
+.mainarea .canvas { justify-self: start; }
+.campanel { position: relative; border: 3px solid var(--line); background: var(--paper-2); padding: 12px; display: grid; gap: 12px; align-content: start; }
+.campanel .wait { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(13, 14, 16, .72); color: #ECEBE6; z-index: 4;
+  font: 700 14px/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; text-align: center; }
+.campanel .wait svg { width: 64px; height: 64px; margin: 0 auto 12px; animation: spin 2.4s linear infinite; }
+.filmstrip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.filmstrip button { flex: none; width: 96px; border: 3px solid transparent; padding: 0; background: none; cursor: pointer; position: relative; text-align: left; }
+.filmstrip button[aria-pressed="true"] { border-color: var(--red); }
+.filmstrip img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.filmstrip .cap { display: block; font: 500 10px/1.2 var(--mono); padding: 3px 2px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filmstrip .vis { position: absolute; left: 3px; bottom: 22px; background: rgba(0, 0, 0, .72); color: #fff; font: 700 10px/1 var(--display); letter-spacing: .06em; padding: 3px 4px; }
+.filmstrip .hero { position: absolute; left: 3px; top: 3px; background: var(--yellow); color: #141414; font: 800 9px/1 var(--display); letter-spacing: .1em; padding: 3px 4px; }
+.filmstrip .flag { position: absolute; right: 4px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--red); border: 2px solid #fff; }
+.bigstrip { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.bigstrip img { width: 100%; aspect-ratio: 1; background: #0d0e10; display: block; cursor: zoom-in; object-fit: contain; }
+.bigstrip figcaption { font: 700 11px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; padding: 6px 0 0; }
+.status { display: grid; gap: 6px; font: 500 12.5px/1.4 var(--mono); }
+.status i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: var(--muted); }
+.status .on i { background: var(--good); } .status .off i { background: var(--bad); }
+
+@media (max-width: 1100px) {
+  .canvaswrap { grid-template-columns: minmax(0, 1fr); }
+  aside.drawer { position: fixed; right: 0; top: var(--bar); bottom: 0; z-index: 25; width: min(360px, 100vw); box-shadow: -12px 0 0 rgba(0,0,0,.08); }
+}
+@media (max-width: 720px) {
+  :root { --rail: 54px; }
+  .tool { height: 54px; } .tool svg { width: 24px; height: 24px; }
+  .projtitle span, .topbtn .lbl { display: none; }
+  .jobchip { padding-inline: 10px; gap: 6px; }
+  .jobchip .txt { max-width: 72px; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .step { grid-template-columns: 26px auto; justify-content: center; padding-inline: 6px; }
+  .step b em, .step > span:last-child { display: none; }
+  .step > span:first-child { grid-row: auto; }
+  .canvas { max-height: none; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand" id="brand" role="button" tabindex="0" aria-label="Start page" data-tip="SpEdE|Splat Edit Engine: select an object in a Gaussian-splat scene, extract it, remove it and patch the surface it hid, or replace it. Runs in your local ComfyUI. Click for the start page.">
+      <svg viewBox="0 0 38 38" aria-hidden="true"><rect x="1" y="1" width="36" height="36" fill="var(--blue)"/><circle cx="19" cy="19" r="12" fill="var(--red)"/><polygon points="19,11 27,26 11,26" fill="var(--yellow)"/></svg>
+    </div>
+    <div class="projtitle"><b>SpEdE</b><span id="ptitle">Splat Edit Engine</span></div>
+    <div class="spacer"></div>
+    <button class="topbtn" id="btn-projects" type="button" data-tip="Projects|Start a new edit or reopen one." aria-expanded="false" aria-controls="drawer-projects">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="2" width="16" height="3" fill="currentColor"/><rect x="1" y="7.5" width="16" height="3" fill="currentColor"/><rect x="1" y="13" width="16" height="3" fill="currentColor"/></svg>
+      <span class="lbl">Projects</span></button>
+    <div class="jobchip" id="jobchip" data-tip="ComfyUI queue|One job runs at a time. Yellow: working · red: the last job failed or ComfyUI is down."><span class="dot"></span><span class="txt">Idle</span></div>
+    <button class="topbtn" id="theme" type="button" aria-label="Toggle dark mode" data-tip="Theme|Switch between light and dark.">
+      <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M11 2a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Tools"></nav>
+
+  <main class="stage" id="stage"></main>
+
+  <aside class="drawer" id="drawer-projects" hidden aria-label="Projects">
+    <div class="dhead"><b>Projects</b><button class="x" type="button" id="close-projects" aria-label="Close"><svg viewBox="0 0 16 16"><path d="M2 2L14 14M14 2L2 14" stroke="var(--ink)" stroke-width="2.5"/></svg></button></div>
+    <div class="dsec">
+      <span class="eyebrow">New edit</span>
+      <div class="newgrid" id="newscenes"></div>
+      <div class="field"><label for="newtitle">Name</label><input type="text" id="newtitle" value="" autocomplete="off"></div>
+      <button class="btn primary" type="button" id="create">Start editing</button>
+      <div class="msg" id="createmsg"></div>
+    </div>
+    <div class="dsec" style="padding-bottom:6px"><span class="eyebrow">Projects</span></div>
+    <ul class="plist" id="plist"></ul>
+  </aside>
+
+  <footer class="steps" id="steps"></footer>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+<dialog class="lb" id="lb"><img id="lbimg" alt=""><p id="lbcap"></p></dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v; else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return el;
+};
+const fmt = (v, d = 2) => v == null || Number.isNaN(v) ? '—' : typeof v === 'number' ? (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString('en-US') : v.toFixed(d)) : String(v);
+const api = async (url, body) => {
+  const res = await fetch(url, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  // FastAPI's validation errors (422) are a list of {loc, msg}.
+  const detail = Array.isArray(data.detail) ? data.detail.map(x => x.msg || JSON.stringify(x)).join('; ') : data.detail;
+  if (!res.ok) throw new Error(detail || res.statusText);
+  if (body !== undefined && /\/api\/projects\/[^/]+\/[a-z_-]+$/.test(url) && data && data.id) { JOB_TOOL = TOOL; BANNER = null; }
+  return data;
+};
+
+/* ---------- symbols ---------- */
+const ICON = {
+  select: '<circle cx="15" cy="15" r="10" fill="none" stroke="var(--ink)" stroke-width="3"/><line x1="15" y1="0" x2="15" y2="9" stroke="var(--ink)" stroke-width="3"/><line x1="15" y1="21" x2="15" y2="30" stroke="var(--ink)" stroke-width="3"/><line x1="0" y1="15" x2="9" y2="15" stroke="var(--ink)" stroke-width="3"/><line x1="21" y1="15" x2="30" y2="15" stroke="var(--ink)" stroke-width="3"/><circle cx="15" cy="15" r="3" fill="var(--red)"/>',
+  remove: '<rect x="3" y="3" width="24" height="24" fill="none" stroke="var(--ink)" stroke-width="3"/><line x1="6" y1="24" x2="24" y2="6" stroke="var(--red)" stroke-width="3.5"/>',
+  result: '<polygon points="15,4 27,24 3,24" fill="var(--yellow)"/><rect x="2" y="24" width="26" height="4" class="fill-ink" fill="var(--ink)"/>',
+  extract: '<circle cx="15" cy="15" r="11" fill="none" stroke="var(--ink)" stroke-width="4"/><circle cx="15" cy="15" r="4" fill="var(--blue)"/>',
+};
+const icon = (k, size = 30) => `<svg viewBox="0 0 30 30" width="${size}" height="${size}" aria-hidden="true">${ICON[k] || ICON.select}</svg>`;
+/* Stages are a real sequence (numbers are information). */
+const STAGES = [
+  ['select', 'Select', 'Click the object'],
+  ['remove', 'Remove', 'Take it out, patch the hole'],
+  ['result', 'Result', 'The edited scene in 3D'],
+];
+const TIPS = {
+  select: 'Click the object in the 3D scene (or place points in a camera photo). SAM 3.1 turns the clicks into a mask, Qwen3-VL names it, and the name is checked against the clicks before the other cameras are searched by it.',
+  remove: 'One ComfyUI job: SAM 3.1 finds the object in every camera and its splats are deleted, Qwen-Image 2.1 paints the surface it hid in the edit camera, SpEdE rebuilds that surface in 3D, and checks run at every step.',
+  result: 'Original and edited scene side by side in 3D, the PLY to download, the all-around fill (the patch holds from every direction) and Replace: a new object where the old one stood.',
+};
+const STAGE_TEXT = { select: 'Selecting', decide: 'Selected', patch: 'Removed', allround: 'All-around fill', replace: 'Replaced' };
+// Jobs and their steps in a few words (the chip, the failure banner).
+const KIND_TEXT = { select: 'Selection', hero: 'Camera switch', pick: '3D pick', extract: 'Extract', remove: 'Remove',
+  allround: 'All-around fill', allround_orbit: 'All-around fill (orbit)', replace: 'Replace' };
+const STEP_LABEL = { gpu_turn: 'waiting for the GPU', pick: 'finding the camera', hero: 'switching camera', comfy_hero: 'hero check',
+  rank: 'ranking cameras', comfy_extract: 'extracting', comfy_patch: 'remove + patch', comfy_allround: 'all-around fill', comfy_replace: 'replace' };
+// The route each job kind was started from: the banner's Try again posts its request there again.
+const KIND_ROUTE = { select: 'select', hero: 'hero', pick: 'pick', extract: 'extract', remove: 'remove', allround: 'allround', allround_orbit: 'allround', replace: 'replace' };
+
+let P = null, CAMS = {}, SCENES = {}, PROJECTS = [], TOOL = 'select', POINTS = [], NEW = { scene: null }, STATUS = null;
+let JOB_TOOL = null, BANNER = null;
+const ADVANCING = new Set(['remove', 'replace']);   // jobs that open the next step
+// The 3D pages' version in their URLs: a browser that cached an older page (before no-cache) loads the new one.
+const PAGES = '20261027';
+const TOP = () => { const st = $('#stage'); if (st) st.scrollTop = 0; };   // a new view starts at its top
+const more = (title, ...kids) => { const body = kids.flat().filter(Boolean);
+  return body.length ? h('details', { class: 'more' }, h('summary', {}, title), ...body) : null; };
+const SELECTING = new Set(['select', 'hero', 'pick']);   // jobs whose result is checked in the confirm view
+
+function openLB(src, cap) { $('#lbimg').src = src; $('#lbcap').textContent = cap || ''; $('#lb').showModal(); }
+$('#lb').addEventListener('click', () => $('#lb').close());
+const fig = (src, cap) => src ? h('figure', {}, h('img', { src, alt: cap, loading: 'lazy', onclick: () => openLB(src, cap) }), h('figcaption', {}, cap)) : null;
+const metrics = rows => h('dl', { class: 'metrics' }, rows.filter(r => r && r[1] != null && r[1] !== '—').flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)]));
+const seg = (opts, cur, onpick) => h('div', { class: 'seg' }, opts.map(([v, label]) => h('button', { type: 'button', 'aria-pressed': String(v === cur), onclick: e => {
+  e.currentTarget.parentNode.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === e.currentTarget))); onpick(v); } }, label)));
+
+/* ---------- rail + stepper ---------- */
+// Which steps can be opened, and which are done: from what the project really has.
+function reachable(k) { return !!P && (k === 'select' || (k === 'remove' && (hasSelection() || !!P.comfy)) || (k === 'result' && !!(P.comfy || P.replace))); }
+function stepDone(k) { return !!P && ((k === 'select' && hasSelection()) || (k === 'remove' && !!P.comfy)); }
+// A Remove or a Replace fixes the selection: another object is a new project.
+function locked() { return !!P && !!(P.edited || P.replaced || P.comfy || P.replace); }
+// Where a project opens: the result once there is one, else the selection (a running Remove: its page).
+function defaultTool() {
+  if (heroWaiting()) return 'select';
+  if (P.job?.kind === 'remove') return 'remove';
+  return P.comfy || P.replace ? 'result' : 'select';
+}
+function renderRail() {
+  $('#rail').replaceChildren(...STAGES.map(([k, name]) => { const on = reachable(k); return h('button', {
+    type: 'button', class: 'tool', 'aria-pressed': String(TOOL === k), 'aria-disabled': String(!on), 'aria-label': name, 'data-tip': name + '|' + TIPS[k] + (!on ? ' (available after the earlier steps)' : ''),
+    onclick: () => on ? setTool(k) : null }, h('span', { html: icon(k) }), stepDone(k) ? h('span', { class: 'done' }) : null); }));
+  // The yellow step is the page shown now; ✓ marks what the project has done.
+  $('#steps').replaceChildren(...STAGES.map(([k, name, sub], i) => { const on = reachable(k); return h('button', {
+    type: 'button', class: 'step' + (P && TOOL === k ? ' now' : '') + (stepDone(k) ? ' done' : ''), 'aria-disabled': String(!on), 'aria-label': `Step ${i + 1}: ${name}`, 'data-tip': `Step ${i + 1} · ${name}|` + TIPS[k], onclick: () => on ? setTool(k) : null },
+    h('span', { html: icon(k, 26) }), h('b', {}, `${i + 1}`, h('em', {}, ` ${name}`)), h('span', {}, sub)); }));
+}
+function setTool(t) { TOOL = t; VIEWTAB = null; renderRail(); renderStage(); TOP(); }
+
+/* ---------- stage renderers ---------- */
+// What each job step does, in the user's words.
+const STEP_TEXT = {
+  gpu_turn: 'waiting for the shared GPU',
+  pick: 'finding the camera that sees the clicked point best',
+  hero: 'switching the edit camera',
+  comfy_hero: 'ComfyUI: SAM 3.1 masks the clicks, Qwen3-VL names the object, SAM 3.1 checks the name in the same view',
+  rank: 'ranking the cameras',
+  comfy_extract: 'ComfyUI: SAM 3.1 in every camera, visual hull, clean object export',
+  comfy_patch: 'ComfyUI: SAM 3.1, remove, Qwen-Image 2.1 repair, 3D surface patch, checks',
+  comfy_allround: 'ComfyUI: Qwen-Image 2.1 turbo cleans every camera that sees the hole, the surface under the object is painted from above, one optimisation against every cleaned camera',
+  comfy_replace: 'ComfyUI: (Extract first if there is none) Qwen-Image 2.1 turbo draws the new object, SAM 3.1 cuts it out, TripoSplat makes it 3D, SpEdE stands it where the old one stood',
+};
+// The long single steps: seconds they usually take at most (twice that earns a hint), and in words.
+const STEP_USUAL = { comfy_hero: 30, comfy_extract: 120, comfy_patch: 120, comfy_allround: 600, comfy_replace: 150 };
+const STEP_USUAL_TEXT = { comfy_hero: 'usually under 30 s', comfy_extract: 'usually 1–2 min', comfy_patch: 'usually 1–2 min',
+  comfy_allround: 'usually about 10 min', comfy_replace: 'usually about 1 min, 2–3 min when it extracts first' };
+const clock = secs => secs < 60 ? `${Math.round(secs)} s` : `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
+function waitOverlay(job) {
+  if (!job) return null;
+  const now = Date.now() / 1000;
+  const rows = job.steps.map(s => {
+    const secs = s.status === 'running' && s.started ? now - s.started : s.seconds;
+    const mark = { done: '✓', running: '▶', failed: '✗' }[s.status] || '·';
+    const running = s.status === 'running';
+    const slow = running && STEP_USUAL[s.name] && secs > 2 * STEP_USUAL[s.name] ? ' · taking longer than usual' : '';
+    const time = secs == null ? '' : running && STEP_USUAL_TEXT[s.name] ? ` · ${clock(secs)} elapsed · ${STEP_USUAL_TEXT[s.name]}` : ` · ${clock(secs)}`;
+    // gpu-turns says why the turn is not granted yet (another job, the queue, memory).
+    const note = running && s.note ? ` · ${s.note}` : '';
+    return `<div style="opacity:${s.status === 'pending' ? .5 : 1}">${mark} ${STEP_TEXT[s.name] || s.name}${note}${time}${slow}</div>`;
+  }).join('');
+  // A 3D pick says what it is doing: first the jump to the best camera, then the selection there.
+  const step = (job.steps.find(s => s.status === 'running') || {}).name;
+  const title = job.status === 'queued' ? 'Waiting for the previous job'
+    : step === 'gpu_turn' ? 'Waiting for the shared GPU'
+    : job.kind === 'pick' ? (step === 'comfy_hero' || step === 'rank' ? 'Selecting it in that camera…' : 'Jumping to the camera that sees it best…')
+    : `${KIND_TEXT[job.kind] || 'Working'}…`;
+  const box = h('div', { class: 'wait' }, h('div', { html: `${icon(TOOL, 64)}<div>${title}</div><div class="mono" style="font-size:12px;text-align:left;margin-top:8px">${rows}</div>` }));
+  box.firstChild.append(h('button', { class: 'btn secondary', type: 'button', style: 'margin-top:14px;color:#ECEBE6;border-color:#ECEBE6', onclick: async e => {
+    e.currentTarget.disabled = true; try { await api(`/api/jobs/${job.id}/cancel`, {}); } catch (err) {} } }, 'Cancel'));
+  return box;
+}
+function head(eyebrow, title, text) {
+  return h('div', { class: 'stagehead' }, h('div', {}, h('span', { class: 'eyebrow' }, eyebrow), h('h1', {}, title), text ? h('p', {}, text) : null));
+}
+function renderStage() {
+  const st = $('#stage');
+  if (!P) return renderWelcome(st);
+  const fn = { select: stageSelect, remove: stageRemove, result: stageResult }[TOOL] || stageSelect;
+  st.replaceChildren(...[banner()].filter(Boolean), ...fn());
+}
+// The last job that did not finish, until dismissed: what failed, and its log.
+function banner() {
+  const b = BANNER;
+  if (!b || b.name !== P?.name) return null;
+  const step = (b.steps || []).find(s => s.status === 'failed' || s.status === 'interrupted' || s.status === 'cancelled');
+  const log = step ? `/files/${P.name}/${step.name}.log` : null;
+  const headline = { failed: 'failed', interrupted: 'was interrupted (SpEdE restarted)', cancelled: 'was cancelled' }[b.status] || b.status;
+  const msg = h('div', { class: 'msg' });
+  const retry = body => async e => {
+    const button = e.currentTarget; button.disabled = true;
+    try { await api(`/api/projects/${P.name}/${KIND_ROUTE[b.kind]}`, body); refresh(); }
+    catch (err) { msg.textContent = err.message; msg.className = 'msg err'; button.disabled = false; } };
+  // Jobs from before the request was kept: a selection can still be redone from the clicks on record.
+  const request = b.request || (b.kind === 'select' && P.points?.length ? { points: P.points, label: P.label_source === 'user' ? P.label : null } : null);
+  // A pick that found nothing would find nothing again from the same pose: say what to do instead.
+  const missed = b.kind === 'pick' && /No object under the click/.test(b.error || '');
+  const canRetry = !missed && KIND_ROUTE[b.kind] && (request || ['extract', 'remove', 'allround', 'allround_orbit'].includes(b.kind)) && !P.job;
+  const spill = b.kind === 'remove' && /removed more than the selection/.test(b.error || '');
+  // Remove: a new seed gives Qwen-Image another try; Remove anyway keeps this seed and relaxes the spill gate.
+  const seed = () => Math.floor(Math.random() * 2 ** 31);
+  return h('div', { class: 'banner' },
+    h('div', {}, h('b', {}, `${KIND_TEXT[b.kind] || b.kind} ${headline}${step ? ` at “${STEP_LABEL[step.name] || step.name}”` : ''}`),
+      missed ? h('p', {}, 'Nothing under that click. Click directly on the object, from closer up.')
+        : h('pre', {}, (b.error || '').split('\n\n')[0].slice(0, 600)),
+      b.kind === 'remove' && (P.files.edit_spill || P.files.failed_qwen_edit) ? h('div', { class: 'gallery', style: 'margin-top:10px;max-width:420px' },
+        fig(P.files.failed_qwen_edit, 'Qwen-Image 2.1 picture'), fig(P.files.edit_spill, 'Removed beyond the selection (magenta)')) : null, msg),
+    h('div', { class: 'row' },
+      canRetry && b.kind === 'remove' ? h('button', { class: 'btn primary', type: 'button', onclick: retry({ ...(request || {}), seed: seed(), ignore_spill: false }) }, 'Try another version')
+        : canRetry && b.kind === 'replace' ? h('button', { class: 'btn primary', type: 'button', onclick: retry({ ...request, seed: seed() }) }, 'Try another version')
+        : canRetry ? h('button', { class: 'btn primary', type: 'button', onclick: retry(request || {}) }, 'Try again') : null,
+      canRetry && spill ? h('button', { class: 'btn secondary', type: 'button', onclick: retry({ ...(request || {}), ignore_spill: true }) }, 'Remove anyway') : null,
+      spill ? h('button', { class: 'btn secondary', type: 'button', onclick: () => setTool('select') }, '← Back to selection') : null,
+      log && !missed ? h('a', { class: 'btn secondary', href: log, target: '_blank', rel: 'noopener' }, 'Show log') : null,
+      h('button', { class: 'btn secondary', type: 'button', onclick: () => { BANNER = null; renderStage(); } }, 'Dismiss')));
+}
+function statusCard() {
+  const s = STATUS || {};
+  const line = (on, text) => h('div', { class: on ? 'on' : 'off' }, h('i'), text);
+  return h('div', { class: 'card' }, h('h3', {}, 'Backend'),
+    h('div', { class: 'status' },
+      line(s.comfy, `ComfyUI ${s.comfy_url || ''} · ${s.comfy ? 'running' : 'not answering'}`),
+      line(s.sdk, `Comfy SDK proxy ${s.sdk_url || ''} · ${s.sdk ? 'running' : 'not answering'}`),
+      line(s.viewer_libs, `3D viewer libraries · ${s.viewer_libs ? 'present' : 'missing in runs/viewer'}`),
+      line(s.scenes > 0, `${s.scenes ?? 0} scene${s.scenes === 1 ? '' : 's'} configured`),
+      line(s.qwen_research_license_acknowledged, 'Qwen-Image 2.1 research licence: ' + (s.qwen_research_license_acknowledged
+        ? 'acknowledged' : 'not acknowledged (set accept_qwen_research_license in studio/config.json)')),
+      s.gpu_turns ? h('div', { class: 'on' }, h('i'), 'Shared GPU: jobs wait for their turn') : null),
+    s.comfy && s.sdk ? null : h('p', {}, 'Start ComfyUI and comfy-api-proxy (see the README), then reload.'));
+}
+function renderWelcome(st) {
+  st.replaceChildren(head('SpEdE — Splat Edit Engine', 'Edit a 3D scene by pointing at it',
+      'Find the object in the 3D scene and click it. SAM 3.1 and Qwen3-VL agree on what it is; then extract it as a clean 3D object, remove it and let Qwen-Image 2.1 and SpEdE rebuild the surface it hid, or replace it with something new.'),
+    h('div', { class: 'canvaswrap' },
+      h('div', { class: 'side' },
+        h('div', { class: 'card' }, h('h3', {}, 'Start a new edit'), h('p', {}, 'Pick a scene in the Projects drawer; it opens in 3D, where you click the object.'),
+          h('button', { class: 'btn primary', type: 'button', onclick: () => toggleDrawer(true) }, 'Open projects'))),
+      h('div', { class: 'side' }, statusCard())));
+}
+
+let PMODE = 1;   // 1 include, 0 exclude
+// Select shows one of: '3d' (free navigation, click the object), 'confirm' (the camera SpEdE
+// jumped to, with the mask), 'points' (click points in that photo), 'extract' (the extracted
+// object in 3D). null: the default for the project.
+let SELVIEW = null;
+const PICKSHOT = {};   // per project: the 3D frame the last pick was clicked in (a data URL)
+const LABEL_DRAFT = {};   // a name being typed survives re-renders
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !P) return;
+  if (e.data?.type === 'spede-pick') { SELVIEW = 'confirm'; POINTS = []; if (e.data.shot) PICKSHOT[P.name] = e.data.shot; JOB_TOOL = TOOL; refresh(); }
+  if (e.data?.type === 'spede-pick-error') { const m = $('#pickmsg'); if (m) { m.textContent = e.data.message; m.className = 'msg err'; } }
+});
+function sceneSize() { return (SCENES[P.scene] && SCENES[P.scene].size) || [512, 512]; }
+function hasSelection() { return !!(P.selection_pixels || P.hero_check); }
+function selView() {
+  if (SELVIEW === 'extract' && P.files?.extract_ply && P.job?.kind !== 'pick') return 'extract';
+  if (locked()) return 'locked';                       // removed or replaced: the photo, read only
+  if (P.job?.kind === 'pick') return 'picking';
+  if (SELVIEW === 'points' || (SELVIEW === 'confirm' && hasSelection())) return SELVIEW;
+  if (SELVIEW === '3d' || !hasSelection()) return P.job ? 'points' : '3d';
+  return 'confirm';
+}
+function setSelView(v) { SELVIEW = v; VIEWTAB = null; renderStage(); TOP(); }
+// The extract result is the newest thing in the project (its PLY newer than every other file).
+function latestIsExtract() {
+  const t = url => Number(new URL(url, location.origin).searchParams.get('t')) || 0;
+  const files = P.files || {};
+  if (!files.extract_ply || !P.extract) return false;
+  const mine = t(files.extract_ply);
+  return Object.entries(files).every(([k, url]) => k.startsWith('extract') || t(url) <= mine);
+}
+const seeExtractButton = (cls = 'btn secondary') => P.files?.extract_ply
+  ? h('button', { class: cls, type: 'button', onclick: () => { TOOL = 'select'; renderRail(); setSelView('extract'); } }, 'See the extracted object') : null;
+// A new project on the same scene, opened straight in 3D: no dead end after an edit.
+async function anotherObject(e) {
+  const button = e?.currentTarget; if (button) button.disabled = true;
+  try {
+    const p = await api('/api/projects', { scene: P.scene, title: `${SCENES[P.scene]?.title || P.scene} edit` });
+    PROJECTS = await api('/api/projects'); await openProject(p.name); setTool('select');
+  } catch (err) { if (button) { button.disabled = false; button.textContent = err.message; } }
+}
+const ANOTHER_HINT = 'Starts again from the original scene; this result stays in Projects.';
+const anotherButton = (cls = 'btn secondary') => h('button', { class: cls, type: 'button', 'data-tip': 'New project|' + ANOTHER_HINT, onclick: anotherObject }, 'Edit another object (new project)');
+const LEGEND = 'Red: what will be edited · yellow outline: your clicks · cyan outline: what the name finds.';
+// Removed or replaced: the selection is fixed. The photo with the mask, what was done, the way on.
+function stageLocked() {
+  const [W, H] = sceneSize();
+  const img = CAMS[P.scene]?.find(c => c.id === P.view)?.image;
+  const canvas = h('div', { class: 'canvas', style: `aspect-ratio:${W} / ${H}` },
+    h('img', { src: P.files.selection_overlay || img, alt: 'Selection in camera ' + P.view }),
+    h('span', { class: 'badge' }, 'Camera ' + P.view), waitOverlay(P.job));
+  const what = P.comfy ? `The ${P.label || 'object'} is removed${P.replace ? ` and replaced with ${P.replace.text}` : ''}.`
+    : P.replace ? `Replaced with ${P.replace.text}.` : 'This project is edited.';
+  return [head('Step 1 · Select', P.label ? `The ${P.label}` : 'The selection', what + ' To select a different object, start a new edit.'),
+    h('div', { class: 'canvaswrap' }, mainArea(canvas, 'Selection'), h('div', { class: 'side' },
+      h('div', { class: 'card' }, h('h3', {}, P.label ? `Selected: ${P.label}` : 'Selection'),
+        h('p', {}, what),
+        h('button', { class: 'btn primary', type: 'button', onclick: () => setTool('result') }, 'See the result in 3D →'),
+        anotherButton(), h('p', { class: 'hint' }, ANOTHER_HINT), seeExtractButton()),
+      rankCard()))];
+}
+function stageSelect() {
+  const mode = selView();
+  if (mode === '3d') return stageExplore();
+  if (mode === 'picking') return stagePicking();
+  if (mode === 'confirm') return stageConfirm();
+  if (mode === 'extract') return stageExtracted();
+  if (mode === 'locked') return stageLocked();
+  const img = CAMS[P.scene]?.find(c => c.id === P.view)?.image;
+  if (!POINTS.length && P.points?.length) POINTS = P.points.map(p => [...p]);   // refine from the last selection
+  const [W, H] = sceneSize();
+  const canvas = h('div', { class: 'canvas', style: `aspect-ratio:${W} / ${H}` });
+  const photo = h('img', { src: P.files.selection_overlay || img, alt: 'Camera ' + P.view });
+  const cv = h('canvas', { class: 'clicks', width: W, height: H, 'aria-label': 'Click to add points' });
+  const count = h('span', {});
+  const draw = () => { const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); const r = Math.max(6, Math.round(W / 64));
+    POINTS.forEach(([x, y, l], i) => { g.fillStyle = l ? '#D7263D' : '#1B4F9C'; g.strokeStyle = '#fff'; g.lineWidth = 3;
+      g.beginPath(); if (l) g.arc(x, y, r, 0, 7); else g.rect(x - r + 1, y - r + 1, 2 * r - 2, 2 * r - 2); g.fill(); g.stroke();
+      g.fillStyle = '#fff'; g.font = `700 ${Math.round(r * 1.4)}px Jost, sans-serif`; g.fillText(String(i + 1), x + r + 2, y - r); });
+    const inc = POINTS.filter(p => p[2]).length;
+    count.textContent = `${inc} include · ${POINTS.length - inc} exclude`; };
+  // The photo is letterboxed inside the canvas element (object-fit: contain): map the click into photo pixels.
+  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); const s = Math.min(r.width / W, r.height / H);
+    const ox = (r.width - W * s) / 2, oy = (r.height - H * s) / 2;
+    const x = (e.clientX - r.left - ox) / s, y = (e.clientY - r.top - oy) / s;
+    if (x < 0 || y < 0 || x > W || y > H) return;
+    const label = (e.shiftKey || e.button === 2) ? 1 - PMODE : PMODE;
+    POINTS.push([Math.round(x), Math.round(y), label]); draw(); });
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.append(...[photo, cv, h('span', { class: 'badge' }, 'Camera ' + P.view), waitOverlay(P.job)].filter(Boolean));
+  requestAnimationFrame(draw);
+  const label = h('input', { type: 'text', id: 'label', value: LABEL_DRAFT[P.name] ?? (P.label_source === 'user' ? P.label || '' : ''), placeholder: 'optional, e.g. lego bulldozer', autocomplete: 'off',
+    oninput: e => { LABEL_DRAFT[P.name] = e.target.value; } });
+  const msg = h('div', { class: 'msg' });
+  const modeSeg = seg([[1, '+ Include'], [0, '− Exclude']], PMODE, v => { PMODE = v; });
+  return [head('Step 1 · Select', 'Click the object',
+      'Place as many points as you like: include points on the object, exclude points on things that must stay. SAM 3.1 uses all of them together. Shift-click or right-click places the opposite kind.'),
+    h('div', { class: 'canvaswrap' }, mainArea(canvas, 'Camera photo'), h('div', { class: 'side' },
+      viewModeCard(),
+      h('div', { class: 'card' }, h('h3', {}, 'Points'),
+        h('div', { class: 'field' }, h('label', {}, 'Click adds'), modeSeg),
+        h('p', { class: 'mono' }, count),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn secondary', type: 'button', onclick: () => { POINTS.pop(); draw(); } }, 'Undo point'),
+          h('button', { class: 'btn secondary', type: 'button', onclick: () => { POINTS = []; P.points = []; photo.src = img; draw(); } }, 'Clear all')),
+        h('div', { class: 'field' }, h('label', { for: 'label' }, 'Name · optional'), label,
+          h('span', { class: 'hint' }, STATUS && STATUS.qwen_research_license_acknowledged === false
+            ? 'Type a name to skip Qwen3-VL naming (research licence not acknowledged)'
+            : 'Leave empty and Qwen3-VL names the selection; SAM 3.1 then checks that the name finds the same object here before it searches the other cameras by it.')),
+        h('button', { class: 'btn primary', type: 'button', disabled: !!P.job, onclick: async () => {
+          if (!POINTS.some(p => p[2])) { msg.textContent = 'Place at least one include point on the object.'; msg.className = 'msg err'; return; }
+          try { await api(`/api/projects/${P.name}/select`, { points: POINTS, label: label.value.trim() || null }); refresh(); }
+          catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } }, P.selection_pixels ? 'Update selection' : 'Select with SAM'),
+        msg),
+      P.hero_check ? heroCheckCard(msg) : null,
+      P.selection_pixels ? h('div', { class: 'card' }, h('h3', {}, P.label ? `Selected: ${P.label}` : `${fmt(P.selection_pixels, 0)} px selected`),
+        P.label_source === 'qwen-vl' ? h('p', {}, 'Named by Qwen3-VL. If it is wrong, edit the name above and press Update selection.') : null,
+        h('button', { class: 'btn primary', type: 'button', disabled: !!P.job || heroWaiting(), onclick: () => setSelView('confirm') }, 'Check the selection →'),
+        P.label ? null : h('p', { class: 'hint' }, 'Name the selection first: the other cameras search for the object by its name.')) : null,
+      P.selection_pixels ? rankCard() : null))];
+}
+const HERO_TEXT = {
+  agree: 'The name finds the same object in this view',
+  click_mask_too_big: 'Your clicks also selected something else',
+  click_mask_too_small: 'The name covers more than you clicked',
+  name_elsewhere: 'The name finds other objects, not the clicked one',
+  name_not_found: 'The name finds nothing in this view',
+  disagree: 'The name and the clicks select different shapes',
+};
+// The two masks' buttons per disagreement: [named, clicked].
+const HERO_CHOICE = {
+  click_mask_too_big: ['Use the named object (recommended)', 'Keep my clicks'],
+  click_mask_too_small: ['Use the whole named object', 'Keep what I clicked'],
+  disagree: ['Use the named (cyan)', 'Use my clicks (yellow)'],
+};
+function heroWaiting() { return !!P.hero_check && !P.hero_confirmed; }
+function heroCheckCard(msg) {
+  const c = P.hero_check, ok = c.passed;
+  const choose = use => async () => {
+    try { await api(`/api/projects/${P.name}/hero_choice`, { use }); refresh(); }
+    catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } };
+  // The name finds nothing or something else: Remove and Extract would not find the object in the other cameras.
+  const rename = c.status === 'name_elsewhere' || c.status === 'name_not_found';
+  const labels = HERO_CHOICE[c.status] || HERO_CHOICE.disagree;
+  const btn = (use, text) => h('button', { class: !rename && c.chosen === use ? 'btn primary' : 'btn secondary', type: 'button', disabled: !!P.job, onclick: choose(use) }, text);
+  // The mask in use now (c.chosen) is the primary button, first.
+  const named = P.files.name_mask ? btn('name', labels[0]) : null, clicked = btn('click', labels[1]);
+  const choices = rename ? [btn('click', 'Keep my clicks anyway')] : c.chosen === 'name' ? [named, clicked] : [clicked, named];
+  return h('div', { class: 'card' }, h('h3', {}, 'Name check'),
+    h('p', { class: ok ? 'mono' : 'msg err' }, `${ok ? '✓' : '✗'} ${HERO_TEXT[c.status] || c.status}` +
+      (c.iou != null ? ` · overlap ${fmt(100 * c.iou, 0)} %` : '')),
+    ok ? null : h('p', { class: 'mono' }, `your clicks ${fmt(c.click_pixels, 0)} px` + (c.name_pixels != null ? ` · the name ${fmt(c.name_pixels, 0)} px` : '')),
+    ok ? null : h('p', {}, (c.advice || '') + '. Yellow outline: your clicks · cyan: what the name finds · red: used now.'),
+    ok || !rename ? null : h('p', {}, 'Remove and Extract find the object in the other cameras by its name, so the clicks alone will not work there: give it a name SAM 3.1 finds here.'),
+    P.hero_confirmed && !ok ? h('p', { class: 'mono' }, `Using the ${c.chosen === 'name' ? 'named' : 'clicked'} mask.`) : null,
+    ok ? null : rename ? nameField(msg, true) : null,
+    ok ? null : h('div', { class: 'row' }, ...choices),
+    ok || rename ? null : nameField(msg));
+}
+// The clean cut-out check (K1) in words; its numbers under Details.
+function k1Lines(k) {
+  if (!k?.name) return [];
+  return k.passed ? [h('p', { class: 'mono' }, '✓ Clean cut-out check passed')]
+    : [h('p', { class: 'msg err' }, '✗ The cut-out may include bits of the surroundings, or miss parts seen from some angles.'),
+       h('p', { class: 'hint' }, 'Try: refine the selection (add exclude points) and extract again.')];
+}
+// here: shown in the extract result view (the 3D is beside it); see: offer the way there.
+function extractCard({ here = false, see = true } = {}) {
+  const x = P.extract || {}, k = x.k1 || {};
+  return h('div', { class: 'card' }, h('h3', {}, 'Clean object export'),
+    h('p', {}, `${fmt(x.object_gaussians, 0)} splats: only the object, the scene around it discarded.`),
+    ...k1Lines(k),
+    h('div', { class: 'row' },
+      P.files?.extract_ply ? h('a', { class: 'btn primary', href: P.files.extract_ply, download: 'object_only.ply' }, 'Download the object (PLY)') : null,
+      here ? h('a', { class: 'btn secondary', href: extractSrc(), target: '_blank' }, 'Open in a new tab') : see ? seeExtractButton() : null),
+    more('More downloads',
+      P.files?.extract_semantic_ply ? h('a', { class: 'btn secondary', href: P.files.extract_semantic_ply, download: 'object_semantic.ply' }, 'Before rescue (semantic)') : null,
+      P.files?.extract_rescued_ply ? h('a', { class: 'btn secondary', href: P.files.extract_rescued_ply, download: 'object_rescued.ply' }, 'After rescue') : null,
+      P.files?.extract_heldout ? h('a', { class: 'btn secondary', href: P.files.extract_heldout, target: '_blank' }, 'Held-out views') : null),
+    more('Details',
+      metrics([
+        ['Semantic object', fmt(x.semantic_object_gaussians ?? x.object_gaussians, 0)],
+        ['Surface rescued', fmt(x.surface_rescued_gaussians, 0)],
+        ['After rescue', fmt(x.rescued_object_gaussians ?? x.object_gaussians, 0)],
+        ['Depth-clean removed', fmt(x.depth_clean_removed_gaussians, 0)],
+        ['Final object splats', fmt(x.object_gaussians, 0)],
+        ['Worst mask coverage', k.minimum_mask_coverage != null ? fmt(100 * k.minimum_mask_coverage, 1) + '%' : null],
+        ['Worst outside alpha', k.maximum_outside_alpha_fraction != null ? fmt(100 * k.maximum_outside_alpha_fraction, 1) + '%' : null],
+      ]),
+      k.name ? gateLine(k, 'K1 clean extraction', k.reason || 'Review the worst camera') : null,
+      P.files?.extract_sheet ? h('figure', {}, h('img', { src: P.files.extract_sheet, alt: 'Extraction proof', onclick: () => openLB(P.files.extract_sheet, 'Extraction sheet') }),
+        h('figcaption', {}, 'Source · semantic core · + surface rescue · + depth clean · semantic selection')) : null));
+}
+const extractSrc = () => `/explore.html?v=${PAGES}&project=${encodeURIComponent(P.name)}&mode=extract&view=${encodeURIComponent(P.view)}`
+  + (P.files?.extract_ply ? '&t=' + (new URL(P.files.extract_ply, location.origin).searchParams.get('t') || '') : '');
+// Replace's form opens from the "Replace it with…" button (per project; the Result page shows it open).
+const REPLACE_OPEN = {};
+const canReplace = () => !!P.label && !heroWaiting();
+const replaceToggle = () => canReplace() ? h('button', { class: 'btn secondary', type: 'button', 'aria-expanded': String(!!REPLACE_OPEN[P.name]),
+  onclick: () => { REPLACE_OPEN[P.name] = !REPLACE_OPEN[P.name]; renderStage(); } }, REPLACE_OPEN[P.name] ? 'Hide Replace' : 'Replace it with…') : null;
+// The extracted object in 3D, big, orbiting its centre; the export card beside it.
+function stageExtracted() {
+  const canvas = h('div', { class: 'canvas wide' },
+    h('iframe', { src: extractSrc(), title: 'The extracted object in 3D', allow: 'fullscreen' }), waitOverlay(P.job));
+  return [head('Extract', P.label ? `The extracted ${P.label}` : 'The extracted object',
+      'Only the object\'s splats, the scene around them discarded. Drag to turn around it, scroll to zoom.'),
+    h('div', { class: 'canvaswrap' }, canvas, h('div', { class: 'side' },
+      h('div', { class: 'card' }, h('h3', {}, 'Next'),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn secondary', type: 'button', onclick: () => setSelView(hasSelection() && !locked() ? 'confirm' : 'locked') }, locked() ? 'Back to the selection' : 'Back to the check'),
+          replaceToggle()),
+        anotherButton()),
+      REPLACE_OPEN[P.name] && canReplace() ? replaceCard() : null,
+      extractCard({ here: true })))];
+}
+function viewModeCard() {
+  return h('div', { class: 'card' }, h('h3', {}, 'View'),
+    h('div', { class: 'row' },
+      h('button', { class: 'btn secondary', type: 'button', onclick: () => setSelView('3d') }, 'Back to 3D'),
+      hasSelection() ? h('button', { class: 'btn secondary', type: 'button', onclick: () => setSelView('confirm') }, 'Back to the check') : null),
+    h('span', { class: 'hint' }, 'In 3D you walk through the scene and click the object; SpEdE jumps to the camera that sees it best.'));
+}
+// The 3D viewer starts where the last pick was clicked from, else at the project's camera.
+function exploreSrc() {
+  const q = new URLSearchParams({ scene: P.scene, view: P.view, project: P.name });
+  const pose = P.pick_pose;
+  if (pose?.position?.length === 3 && pose?.quaternion?.length === 4) {
+    q.set('pos', pose.position.join(',')); q.set('quat', pose.quaternion.join(',')); if (pose.fov) q.set('fov', pose.fov);
+  }
+  q.set('v', PAGES);
+  return '/explore.html?' + q;
+}
+function stageExplore() {
+  const canvas = h('div', { class: 'canvas wide' },
+    h('iframe', { src: exploreSrc(), title: 'Explore the scene in 3D', allow: 'fullscreen' }));
+  return [head('Step 1 · Select', 'Click the object to edit',
+      'Walk through the scene and click the object. SpEdE jumps to the real camera that sees it best from about where you looked and selects it there with SAM 3.1; you check the selection before anything changes.'),
+    h('div', { class: 'canvaswrap' }, canvas, h('div', { class: 'side' },
+      hasSelection() ? h('div', { class: 'card' }, h('h3', {}, P.label ? `Selected: ${P.label}` : 'Current selection'),
+        h('p', {}, 'Click another object to replace it, or go back to it.'),
+        h('div', { class: 'row' }, h('button', { class: 'btn secondary', type: 'button', onclick: () => setSelView('confirm') }, 'Back to the check'), seeExtractButton())) : null,
+      h('div', { class: 'msg', id: 'pickmsg' }),
+      h('div', { class: 'card' }, h('h3', {}, 'Click points instead'),
+        h('p', {}, `Place include and exclude points in camera ${P.view}'s photo.`),
+        h('div', { class: 'row' }, h('button', { class: 'btn secondary', type: 'button', onclick: () => setSelView('points') }, 'Use the camera photo')))))];
+}
+// The 3D frame the pick was clicked in, with the click.
+function pickShot() {
+  const src = PICKSHOT[P.name];
+  return src ? h('figure', {}, h('img', { src, alt: 'Where you clicked in 3D', onclick: () => openLB(src, 'Where you clicked in 3D') }),
+    h('figcaption', {}, 'Where you clicked in 3D')) : null;
+}
+// While a 3D pick runs: the frame it was clicked in stays, under the progress.
+function stagePicking() {
+  const canvas = h('div', { class: 'canvas wide' }, PICKSHOT[P.name] ? h('img', { src: PICKSHOT[P.name], alt: 'Where you clicked in 3D' }) : null,
+    h('span', { class: 'badge' }, 'Your click in 3D'), waitOverlay(P.job));
+  return [head('Step 1 · Select', 'Finding the object',
+      'SpEdE finds the point you clicked, jumps to the real camera that sees it best and selects the object there with SAM 3.1. You check the result next.'),
+    h('div', { class: 'canvaswrap' }, canvas, h('div', { class: 'side' }))];
+}
+// After a pick: the camera SpEdE jumped to, with SAM's mask. One way on (Remove), the others below it.
+function stageConfirm() {
+  const [W, H] = sceneSize();
+  const img = CAMS[P.scene]?.find(c => c.id === P.view)?.image;
+  const msg = h('div', { class: 'msg' });
+  const canvas = h('div', { class: 'canvas', style: `aspect-ratio:${W} / ${H}` },
+    h('img', { src: P.files.selection_overlay || img, alt: 'Selection in camera ' + P.view }),
+    h('span', { class: 'badge' }, 'Camera ' + P.view), waitOverlay(P.job));
+  const busy = !!P.job;
+  // Remove needs a name (the other cameras search by it) and, when the clicks and the name disagree, the user's choice.
+  const needs = heroWaiting() ? 'hero' : !P.label ? 'name' : null;
+  return [head('Step 1 · Select', P.label ? `Is this the ${P.label}?` : 'Is this the object?',
+      (P.pick_pose ? `SpEdE jumped to camera ${P.view}, the real photo that sees your click best.` : `Camera ${P.view}.`) + ' Red is what SAM 3.1 selected.'),
+    h('div', { class: 'canvaswrap' }, mainArea(canvas, 'Selection'), h('div', { class: 'side' },
+      h('div', { class: 'card' }, h('h3', {}, P.label ? `Selected: ${P.label}` : `${fmt(P.selection_pixels, 0)} px selected`),
+        P.label_source === 'qwen-vl' ? h('p', {}, 'Named by Qwen3-VL.') : null,
+        h('p', { class: 'hint' }, LEGEND),
+        needs === 'name' ? h('p', {}, 'Name it first: the other cameras find the object by its name.') : null,
+        needs === 'name' ? nameField(msg, true) : null,
+        needs === 'hero' ? h('p', {}, 'The name and your click disagree: choose below before going on.') : null,
+        h('button', { class: 'btn primary', type: 'button', disabled: busy || !!needs, 'data-tip': 'Remove|' + TIPS.remove, onclick: () => setTool('remove') }, 'Looks right → Remove'),
+        h('span', { class: 'eyebrow' }, 'Or:'),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn secondary', type: 'button', disabled: busy || !!needs, 'data-tip': 'Extract|Keep the selected object and discard the scene around it: a clean object-only PLY.',
+            onclick: async () => { try { await api(`/api/projects/${P.name}/extract`, {}); refresh(); } catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } },
+            P.files?.extract_ply ? 'Extract again' : 'Extract it'),
+          needs ? null : replaceToggle()),
+        seeExtractButton(),
+        h('span', { class: 'eyebrow' }, 'Not right?'),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn secondary', type: 'button', disabled: busy, onclick: () => setSelView('points') }, 'Refine with points'),
+          h('button', { class: 'btn secondary', type: 'button', disabled: busy, onclick: () => setSelView('3d') }, 'Back to 3D')),
+        msg),
+      needs === 'hero' ? heroCheckCard(msg) : null,
+      !needs && REPLACE_OPEN[P.name] ? replaceCard() : null,
+      PICKSHOT[P.name] ? h('div', { class: 'card' }, pickShot()) : null,
+      P.extract ? extractCard({ see: false }) : null,
+      rankCard()))];
+}
+function rankCard() {
+  const VR = P.view_rank;
+  if (!VR || !VR.views?.length) return null;
+  return h('div', { class: 'card' }, h('h3', {}, 'Edit camera'),
+    VR.one_surface === false ? h('p', { class: 'msg err' }, `The selection spans very different depths (${VR.depth_spread.toFixed(1)}× spread). Either it includes things behind the object (check the red area and add exclude points), or the splat never reconstructed the object in 3D (then it will not come out cleanly).`) : null,
+    h('p', {}, locked() ? `${P.view}. The edit camera is fixed once the scene is edited.`
+      : VR.recommended !== P.view ? `${P.view} now; ${VR.recommended} sees the object best.` : `${P.view}: this camera sees the object best.`),
+    h('button', { class: 'btn secondary', type: 'button', onclick: () => { VIEWTAB = 'cameras'; renderStage(); } },
+      `See the ${VR.views.length} cameras that see it`));
+}
+function gateLine(g, okText, failText) {
+  const value = g.value != null ? ` · ${(100 * g.value).toFixed(1)} % worst, ${(100 * (g.mean || 0)).toFixed(1)} % mean` : '';
+  return h('p', { class: g.passed ? 'mono' : 'msg err' }, g.passed ? `✓ ${okText}${value}` : `✗ ${g.name}: ${g.reason || failText}${value}`);
+}
+
+/* ---------- main area: the primary view, or the cameras that see the object ---------- */
+let VIEWTAB = null, CAMPICK = null;
+function flaggedCameras() {
+  const out = {};
+  Object.values(P.gates || {}).forEach(g => { if (g?.worst_view && g.passed === false && !String(g.worst_view).includes('@')) out[g.worst_view] = g.name; });
+  return out;
+}
+function cameraList() {
+  // The hero, then any camera a gate flagged, then the cameras that see the selection, best first.
+  const ids = [P.view, ...Object.keys(flaggedCameras()), ...(P.view_rank?.views || []).map(r => r.view_id)];
+  return [...new Set(ids.filter(Boolean))];
+}
+function mainArea(primary, primaryLabel = 'Result · 3D') {
+  const hasCams = !!(P.view_rank?.views?.length);
+  const tabs = [['main', primaryLabel, true], ['cameras', 'Cameras', hasCams]];
+  let tab = VIEWTAB;
+  if (!tab || !tabs.find(t => t[0] === tab)?.[2]) tab = 'main';
+  const bar = h('div', { class: 'vtabs' }, ...tabs.map(([k, label, on]) => h('button', { type: 'button', disabled: !on, 'aria-pressed': String(k === tab),
+    onclick: () => { VIEWTAB = k; renderStage(); } }, label)));
+  return h('div', { class: 'mainarea' }, bar, tab === 'cameras' ? cameraPanel() : primary);
+}
+function cameraPanel() {
+  const cams = cameraList();
+  const rank = Object.fromEntries((P.view_rank?.views || []).map(r => [r.view_id, r]));
+  const flagged = flaggedCameras();
+  if (!CAMPICK || !cams.includes(CAMPICK)) CAMPICK = P.view;
+  const photo = id => CAMS[P.scene]?.find(c => c.id === id)?.image;
+  const strip = h('div', { class: 'filmstrip' }, ...cams.map(id => h('button', { type: 'button', 'aria-pressed': String(id === CAMPICK), id: 'film-' + id,
+      'data-tip': `${id}|${rank[id] ? Math.round(rank[id].visible * 100) + ' % of the selection visible · ' + Math.round(rank[id].in_frame * 100) + ' % in the frame' : 'flagged by a gate'}`,
+      onclick: () => { CAMPICK = id; renderStage(); } },
+    h('img', { src: photo(id), alt: id, loading: 'lazy' }),
+    id === P.view ? h('span', { class: 'hero' }, 'EDIT') : null,
+    rank[id] ? h('span', { class: 'vis' }, Math.round(rank[id].visible * 100) + ' %') : null,
+    flagged[id] ? h('span', { class: 'flag', title: flagged[id] }) : null,
+    h('span', { class: 'cap' }, id))));
+  requestAnimationFrame(() => document.getElementById('film-' + CAMPICK)?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  const panes = h('div', { class: 'bigstrip' }, h('figure', {}, h('img', { src: photo(CAMPICK), alt: CAMPICK, onclick: () => openLB(photo(CAMPICK), CAMPICK) }),
+        h('figcaption', {}, 'Real photo')));
+  const info = [];
+  if (flagged[CAMPICK]) info.push(h('p', { class: 'msg err' }, `${flagged[CAMPICK]} flagged this camera.`));
+  if (rank[CAMPICK]) info.push(h('p', { class: 'mono' }, `${CAMPICK}${CAMPICK === P.view ? ' is the edit camera' : ''} · ${Math.round(rank[CAMPICK].visible * 100)} % of the selection visible · ${Math.round(rank[CAMPICK].in_frame * 100)} % in the frame · ${(rank[CAMPICK].area_fraction * 100).toFixed(1)} % of the image`));
+  if (!locked() && CAMPICK !== P.view && rank[CAMPICK]?.points?.length) {
+    // Before the removal the hero can still change: the selection and the hero check move there.
+    const msg = h('span', { class: 'msg' });
+    info.push(h('div', { class: 'row' }, h('button', { class: 'btn primary', type: 'button', disabled: !!P.job, onclick: async () => {
+      try { POINTS = []; await api(`/api/projects/${P.name}/hero`, { view: CAMPICK }); refresh(); } catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } },
+      `Use ${CAMPICK} as the edit camera`), msg));
+  }
+  info.push(h('p', { class: 'hint' }, 'The edit camera is where Qwen-Image 2.1 paints the hidden surface: pick the one that sees the object best and most fully.'));
+  return h('div', { class: 'campanel' }, strip, panes, ...info, waitOverlay(P.job));
+}
+
+/* ---------- remove + patch ---------- */
+// The gates' numbers (Details).
+function comfyGates() {
+  const g = P.gates || {}, out = [];
+  if (g.removal?.name) out.push(gateLine(g.removal, 'G1 removal: nothing left in the cameras', `still visible in camera ${g.removal.worst_view}`));
+  if (g.plane?.name && g.plane.depth_model) out.push(gateLine(g.plane, `G2 MoGe depth fits the scene around the hole · ${fmt(100 * (g.plane.support_fraction || 0), 0)} % of the ring (${g.plane.depth_model}), median error ${fmt(100 * (g.plane.rmse || 0), 1)} %`, 'MoGe depth does not fit the scene'));
+  else if (g.plane?.name) out.push(gateLine(g.plane, `G2 support plane · ${fmt(100 * (g.plane.support_fraction || 0), 0)} % of the ${g.plane.ring || ''} ring on it`, 'no trustworthy support plane'));
+  if (g.patch?.name) out.push(h('p', { class: g.patch.passed ? 'mono' : 'msg err' }, `${g.patch.passed ? '✓' : '✗'} G3 patch matches Qwen's picture · coverage ${fmt(100 * (g.patch.coverage || 0), 0)} %, RGB error ${fmt(g.patch.rgb_mae, 3)}`));
+  if (g.heldout?.name) out.push(h('p', { class: g.heldout.passed ? 'mono' : 'msg err' }, `${g.heldout.passed ? '✓' : '✗'} H1 rest of the scene unchanged in ${g.heldout.judged_views} other cameras` +
+    (g.heldout.views?.length ? ` · worst RGB error ${fmt(Math.max(...g.heldout.views.map(v => v.outside_rgb_mae || 0)), 3)}` : '')));
+  return out;
+}
+// The same checks in words: what passed, what may be wrong and what to try.
+const GATE_TEXT = {
+  removal: ['The object is gone from every camera', 'Some of the object may still be visible from other angles'],
+  plane: ['The new surface lines up with the scene around the hole', 'The new surface may not line up with the scene around it'],
+  patch: ['The 3D patch matches the repaired picture', 'The 3D patch differs from the repaired picture'],
+  heldout: ['The rest of the scene is unchanged', 'Parts of the scene outside the object changed'],
+};
+function gateSummary() {
+  const g = P.gates || {};
+  const keys = Object.keys(GATE_TEXT).filter(k => g[k]?.name);
+  const failed = keys.filter(k => g[k].passed === false);
+  return [...keys.map(k => h('p', { class: g[k].passed === false ? 'msg err' : 'mono' }, `${g[k].passed === false ? '✗' : '✓'} ${GATE_TEXT[k][g[k].passed === false ? 1 : 0]}`)),
+    failed.length ? h('p', { class: 'hint' }, 'Try Remove again for another version, or start a new edit with a tighter selection.') : null];
+}
+function patchMetrics(c) {
+  return metrics([['Splats removed', fmt(c.object_gaussians, 0)], ['Footprint leftovers', fmt(c.footprint_additional, 0)],
+    ['Unseen contact layer cleared', fmt(c.contact_cleared, 0)], ...(c.carved != null ? [['Residue carved', fmt(c.carved, 0)]] : []),
+    ['New surface splats', fmt(c.births, 0)], ['Scene splats now', fmt(c.total_gaussians, 0)], ['ComfyUI job', c.comfy_job?.slice(0, 8)]]);
+}
+function nameField(msg, primary = false) {
+  const input = h('input', { type: 'text', value: LABEL_DRAFT[P.name] ?? (P.label || ''), placeholder: 'e.g. bonsai tree', autocomplete: 'off',
+    oninput: e => { LABEL_DRAFT[P.name] = e.target.value; } });
+  return h('div', { class: 'field' }, h('label', {}, 'Name'), input,
+    h('button', { class: primary ? 'btn primary' : 'btn secondary', type: 'button', disabled: !!P.job, 'data-tip': 'Search for this name|SAM 3.1 looks for the name in this camera and checks it against your clicks.', onclick: async () => {
+      try { await api(`/api/projects/${P.name}/label`, { label: input.value }); delete LABEL_DRAFT[P.name]; refresh(); }
+      catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } }, 'Search for this name'));
+}
+function stageRemove() {
+  const c = P.comfy, r = P.replace, msg = h('div', { class: 'msg' });
+  const canvas = h('div', { class: 'canvas' },
+    h('img', { src: P.files.comfy_qwen_edit || P.files.selection_overlay, alt: c ? 'Qwen-Image 2.1 repair' : 'Selection' }),
+    h('span', { class: 'badge' }, c ? 'Edit camera · repaired picture' : 'Selection'), waitOverlay(P.job));
+  return [head('Step 2 · Remove', 'Remove the object',
+      'One ComfyUI job: SAM 3.1 finds the object in every camera and its splats are deleted, Qwen-Image 2.1 paints the surface it hid in the edit camera, and SpEdE rebuilds that surface in 3D. Checks run at every step; about 1–2 minutes.'),
+    h('div', { class: 'canvaswrap' }, mainArea(canvas, c ? 'Repaired picture' : 'Selection'), h('div', { class: 'side' },
+      h('div', { class: 'card' }, h('h3', {}, 'Remove ' + (P.label || 'the selection')),
+        c ? null : h('p', {}, P.label ? `SAM 3.1 looks for “${P.label}” in the other cameras.` : 'Name the selection: SAM 3.1 looks for it by this name in the other cameras.'),
+        // The name can still change before anything is edited; after that, another object is a new edit.
+        heroWaiting() || locked() ? null : nameField(msg),
+        ...(c ? gateSummary() : []),
+        r ? h('p', { class: 'msg err' }, `Removing${c ? ' again' : ''} starts over: the replacement (${r.text}) is set aside.`) : null,
+        h('button', { class: 'btn primary', type: 'button', disabled: !!P.job || !P.label || heroWaiting(), onclick: async () => {
+          try { await api(`/api/projects/${P.name}/remove`, {}); refresh(); } catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } },
+          (c ? 'Remove again' : 'Remove and patch') + (r ? ' (discards the replacement)' : '')),
+        c ? more('Details', patchMetrics(c), comfyGates()) : null,
+        msg),
+      heroWaiting() ? heroCheckCard(msg) : null,
+      c || r ? h('button', { class: 'btn secondary', type: 'button', onclick: () => setTool('result') }, 'See the result in 3D →') : null))];
+}
+function stageResult() {
+  const c = P.comfy, r = P.replace, a = P.allround;
+  // The 3D compare shows the newest result: a Replace, else the all-around fill, else the hero patch.
+  const latest = r ? '&b=replace' : a ? '&b=allround' : '';
+  const canvas = h('div', { class: 'canvas wide' },
+    c || r ? h('iframe', { src: '/compare.html?run=' + P.name + '&g=' + Math.round(r?.finished || a?.finished || c?.finished || 0) + latest + '&v=' + PAGES, title: '3D compare' })
+      : h('span', { class: 'badge' }, 'Nothing edited yet'), waitOverlay(P.job));
+  const drag = ' Drag either side: both views move together; Space switches A/B.';
+  // One primary download: the newest result; the others under More downloads.
+  const downloads = [r && P.files.replace_ply ? ['Download replaced scene (PLY)', P.files.replace_ply, 'replaced_scene.ply'] : null,
+    a && P.files.allround_ply ? ['Download all-around scene (PLY)', P.files.allround_ply, 'allround_scene.ply'] : null,
+    c && P.files.comfy_patched_ply ? ['Download patched scene (PLY)', P.files.comfy_patched_ply, 'patched_scene.ply'] : null].filter(Boolean);
+  const link = ([text, href, file], i) => h('a', { class: i ? 'btn secondary' : 'btn primary', href, download: file }, text);
+  return [head('Step 3 · Result', r ? `Replaced with ${r.text}` : c ? 'The patched scene' : 'Nothing edited yet',
+      r ? (c ? 'The new object stands where the removed one stood, on the patched surface.' : 'The new object stands where the old one stood; the rest of the scene is the original.') + drag
+      : c ? 'The surface the object hid is rebuilt in 3D from Qwen-Image 2.1\'s repaired picture' + (a ? ', and the all-around fill makes it hold from every direction.' : '.') + drag
+      : 'Remove the object, or replace it, to see the result here.'),
+    h('div', { class: 'canvaswrap' }, canvas, h('div', { class: 'side' },
+      c || r ? h('div', { class: 'card' }, h('h3', {}, 'Result'),
+        ...(c ? gateSummary() : []),
+        h('div', { class: 'row' }, downloads.length ? link(downloads[0], 0) : null,
+          h('a', { class: 'btn secondary', href: `/explore.html?v=${PAGES}&project=${encodeURIComponent(P.name)}&mode=result&view=${encodeURIComponent(P.view)}`, target: '_blank' }, 'Walk through it')),
+        more('More downloads', downloads.slice(1).map(d => link(d, 1))),
+        c ? more('Details', patchMetrics(c), comfyGates()) : null,
+        c ? h('button', { class: 'btn secondary', type: 'button', onclick: () => setTool('remove') }, '← Back to Remove') : null) : null,
+      c || r ? replaceCard() : null,
+      c ? allroundCard() : null,
+      h('div', { class: 'card' }, h('h3', {}, 'Next object'),
+        h('p', {}, ANOTHER_HINT), anotherButton('btn primary')),
+      c ? h('div', { class: 'card' }, h('h3', {}, 'Pictures'), h('div', { class: 'gallery' },
+        fig(P.files.comfy_qwen_edit, 'Qwen-Image 2.1 repair · edit camera'),
+        fig(P.files.comfy_patched_render, 'Patched scene · edit camera'),
+        ...(isOrbit(a) ? [fig(P.files.allround_chain, 'Qwen-Image 2.1 chain · original | clean, ten cameras'),
+                          fig(P.files.allround_warp, 'Edit camera warped along the orbit (experimental orbit path)'),
+                          fig(P.files.allround_result, 'All-around fill · clean target | render, chain cameras')]
+          : a ? [fig(P.files.allround_sheet, 'All-around fill · clean target | render, per camera'),
+                 fig(P.files.allround_hero_clean, 'Qwen-Image 2.1 clean edit camera at 1024 px')] : []))) : null))];
+}
+// The hero patch is right in one camera; the all-around fill makes it hold from every direction.
+// Results written before the progressive fill carry no method but an orbit chain (allround_mode orbit).
+const isOrbit = a => !!a && (a.method === 'orbit' || (!a.method && !!a.chain));
+function allroundCard() {
+  const a = P.allround, msg = h('div', { class: 'msg' });
+  const depth = P.comfy?.patch_mode === 'depthfill';
+  let rows = [];
+  if (isOrbit(a)) {
+    // The experimental MiniMax H3 orbit path keeps its own numbers.
+    const held = (a.held_out || []).map(v => a.after?.[v]).filter(Boolean);
+    rows = [['Chain cameras', fmt((a.cameras || a.chain || []).length, 0)], ['Orbit frames used', `${fmt(a.usable_frames, 0)} / ${fmt(a.orbit_frames, 0)}`],
+            ['Splats optimised', fmt(a.trainable, 0)], ['Drifted, pruned', fmt(a.pruned_drifted, 0)],
+            ['Scene splats now', fmt(a.total_gaussians, 0)],
+            ...(held.length ? [['Held-out cameras, RGB error', held.map(r => fmt(r.mae, 3)).join(' · ')]] : []),
+            ['ComfyUI job', a.comfy_job?.slice(0, 8)]];
+  } else if (a) {
+    // Measured against the cleaned targets: the fill holds no camera out. The independent fill has no births.
+    const errs = Object.values(a.after || {}).map(r => r?.mae).filter(v => typeof v === 'number');
+    const hero = a.after?.[(a.cameras || [])[0]]?.mae;
+    rows = [['Cameras cleaned', fmt(a.cameras_filled, 0)], ['Support discs', fmt(a.surface_discs, 0)],
+            ...(a.method === 'independent' ? [] : [['New splats', fmt(a.births, 0)]]), ['Scene splats now', fmt(a.total_gaussians, 0)],
+            ['Fit to the cleaned cameras (edit camera / mean RGB error)', errs.length ? `${fmt(hero, 3)} / ${fmt(errs.reduce((x, y) => x + y, 0) / errs.length, 3)}` : null],
+            ['ComfyUI job', a.comfy_job?.slice(0, 8)]];
+  }
+  // After a Replace the fill would rebuild the scene without the new object: not offered.
+  const blocked = P.replace ? 'The all-around fill isn\'t available after Replace. To get both: Remove again, run the all-around fill, then Replace.'
+    : !depth ? 'The all-around fill builds on the depth fill; this result used the planar fallback.' : null;
+  return h('div', { class: 'card' }, h('h3', {}, 'All-around fill'),
+    a ? h('p', {}, `Done: ${fmt(a.cameras_filled ?? (a.cameras || a.chain || []).length, 0)} cameras cleaned. The 3D view shows the all-around result.`)
+      : h('p', {}, 'The patch is right from the edit camera. The all-around fill cleans every camera that sees the hole (Qwen-Image 2.1 turbo) and fits the patch to all of them, so it holds from every direction. About 10 minutes.'),
+    blocked ? h('p', { class: 'hint' }, blocked)
+      : h('button', { class: a ? 'btn secondary' : 'btn primary', type: 'button', disabled: !!P.job, onclick: async () => {
+          try { await api(`/api/projects/${P.name}/allround`, {}); refresh(); } catch (e) { msg.textContent = e.message; msg.className = 'msg err'; } } },
+          a ? 'Run the all-around fill again' : 'Make it hold from every direction'),
+    a ? more('Details', metrics(rows)) : null, msg);
+}
+// Replace: a new object where the selected one stands, straight after the selection (into the original
+// scene without exactly the extracted object) or after a Remove (into its result): no stacking on a retry.
+// The typed words, the picture and the size survive re-renders (REPLACE_DRAFT, per project).
+const REPLACE_DRAFT = {};
+const SIZE_TEXT = { match: 'Match', natural: 'Natural', larger: 'Larger' };
+function replaceCard() {
+  const r = P.replace, msg = h('div', { class: 'msg' }), what = P.label || 'object';
+  const draft = REPLACE_DRAFT[P.name] ??= { text: r?.text || '', image: r?.image || null, size: r?.size || 'match' };
+  const fail = e => { msg.textContent = e.message; msg.className = 'msg err'; };
+  // One button: every Replace draws a new version (a new seed), so pressing it again is never a repeat.
+  const go = h('button', { class: 'btn primary', type: 'button', disabled: !!P.job || !draft.text.trim(), onclick: async () => {
+    try { await api(`/api/projects/${P.name}/replace`, { text: draft.text, image: draft.image, size: draft.size || 'match', seed: Math.floor(Math.random() * 2 ** 31) }); refresh(); }
+    catch (e) { fail(e); } } }, 'Replace');
+  const input = h('input', { type: 'text', value: draft.text, placeholder: 'e.g. a green ceramic vase', autocomplete: 'off', maxlength: 120,
+    oninput: e => { draft.text = e.target.value; go.disabled = !!P.job || !draft.text.trim(); } });
+  const file = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true, onchange: async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    msg.textContent = 'Adding the picture…'; msg.className = 'msg';
+    try {
+      const data = await new Promise((ok, no) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.onerror = () => no(new Error('could not read the file')); rd.readAsDataURL(f); });
+      draft.image = (await api(`/api/projects/${P.name}/replace_image`, { data })).image; renderStage();
+    } catch (err) { fail(err); } } });
+  const pl = r?.placement || {};
+  return h('div', { class: 'card' }, h('h3', {}, 'Replace with…'),
+    h('p', {}, `Put something new where the ${what} ${P.comfy ? 'stood' : 'stands'}. Qwen-Image 2.1 draws it into the edit camera's view, TripoSplat makes it 3D, and SpEdE stands it where the old one stood. About a minute${P.extract ? '' : ', a few more the first time'}.`),
+    h('p', { class: 'hint' }, 'TripoSplat invents the back side, so the new object looks best within about ±15° of the edit camera. One replacement per project.'),
+    h('div', { class: 'field' }, h('label', {}, 'What to put there'), input),
+    h('div', { class: 'field' }, h('label', {}, 'Size'), seg(Object.entries(SIZE_TEXT), draft.size || 'match', v => { draft.size = v; })),
+    h('p', { class: 'hint' }, 'Match: as big as the old object. Natural: the size Qwen draws. Larger: 1.3 × Match.'),
+    h('div', { class: 'row' },
+      h('button', { class: 'btn secondary', type: 'button', disabled: !!P.job, onclick: () => file.click() }, draft.image ? 'Change the picture' : 'Add a picture (optional)'),
+      draft.image ? h('button', { class: 'btn secondary', type: 'button', onclick: () => { draft.image = null; renderStage(); } }, 'Remove picture') : null, file),
+    draft.image ? h('div', { class: 'gallery' }, fig(`/files/${P.name}/replace_inputs/${draft.image}`, 'Look like this picture')) : null,
+    go,
+    r ? h('p', { class: 'mono' }, `✓ Replaced with ${r.text}${r.image ? ' (with a picture)' : ''}`) : null,
+    r ? h('div', { class: 'gallery' }, fig(P.files.replace_qwen, 'Qwen-Image 2.1 insert · edit camera'),
+                                       fig(P.files.replace_render, 'Replaced scene in 3D · edit camera')) : null,
+    r ? more('Details', metrics([['New object splats', fmt(r.object_gaussians, 0)],
+                 ['Size', SIZE_TEXT[r.size] || null],
+                 ['Height vs the removed object', pl.height_vs_removed != null ? `${fmt(pl.height_vs_removed, 2)}×` + (pl.height_natural_vs_removed != null && r.size !== 'natural' ? ` (Qwen drew ${fmt(pl.height_natural_vs_removed, 2)}×)` : '') : null],
+                 ['Moved from the old spot', pl.shift_fraction != null ? `${fmt(100 * pl.shift_fraction, 0)} % of its size${pl.shift_capped ? ' (capped)' : ''}` : null],
+                 ['Built on', r.base === 'remove' ? 'the Remove result' : r.base === 'source' ? 'the original scene' : null],
+                 ['Old footprint filled', r.fill_fraction != null ? `${fmt(100 * r.fill_fraction, 0)} % · ${r.fill_source === 'plane' ? 'from the surface round it' : 'from the Remove fill'}` : null],
+                 ['ComfyUI job', r.comfy_job?.slice(0, 8)]])) : null,
+    msg);
+}
+
+/* ---------- projects drawer ---------- */
+function toggleDrawer(open) {
+  const d = $('#drawer-projects'); const want = open ?? d.hidden;
+  d.hidden = !want; $('#btn-projects').setAttribute('aria-expanded', String(want));
+  if (want) renderDrawer();
+}
+$('#btn-projects').onclick = () => toggleDrawer();
+$('#close-projects').onclick = () => toggleDrawer(false);
+async function renderDrawer() {
+  const keys = Object.keys(SCENES);
+  if (!NEW.scene && keys.length) { NEW.scene = keys[0]; $('#newtitle').value = `${SCENES[keys[0]].title} edit`; }
+  $('#newscenes').replaceChildren(...keys.map(k => h('button', { type: 'button', 'aria-pressed': String(NEW.scene === k), onclick: () => { NEW.scene = k; $('#newtitle').value = `${SCENES[k].title} edit`; renderDrawer(); } },
+    h('img', { src: `/api/scenes/${k}/camera/${SCENES[k].hero}.png`, alt: SCENES[k].title }), h('b', {}, SCENES[k].title))));
+  if (!NEW.scene) {
+    $('#newscenes').replaceChildren(h('p', { class: 'empty' }, 'No scenes configured: add them to config.json (see config.example.json).'));
+  }
+  // Development and verification runs stay on disk but out of the list unless asked for (the open one always shows).
+  const tests = PROJECTS.filter(isTestRun), shown = PROJECTS.filter(p => SHOW_TESTS || !isTestRun(p) || P?.name === p.name);
+  const when = p => p.created ? new Date(p.created * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  $('#plist').replaceChildren(...(shown.length ? shown.map(p => h('li', {}, h('button', { type: 'button', 'aria-current': String(P?.name === p.name), onclick: () => { openProject(p.name); toggleDrawer(false); } },
+    h('img', { src: `/api/scenes/${p.scene}/camera/${p.view}.png`, alt: '' }),
+    h('span', {}, h('span', { class: 't' }, p.title),
+      h('span', { class: 'm' }, [SCENES[p.scene]?.title || p.scene, p.label || 'nothing selected', STAGE_TEXT[p.stage] || p.stage, when(p)].filter(Boolean).join(' · ')))))) : [h('li', { class: 'dsec empty' }, 'No projects yet.')]),
+    ...(tests.length ? [h('li', {}, h('button', { class: 'ptoggle', type: 'button', onclick: () => { SHOW_TESTS = !SHOW_TESTS; renderDrawer(); } },
+      SHOW_TESTS ? 'Hide test runs' : `Show test runs (${tests.length})`))] : []));
+}
+let SHOW_TESTS = false;
+const isTestRun = p => /verify|spike|_v\d+_|^studio_/i.test(p.name) || /^(verify|test)\b/i.test(p.title || '');
+$('#create').onclick = async () => {
+  if (!NEW.scene) return;
+  const msg = $('#createmsg'); msg.textContent = ''; msg.className = 'msg';
+  try {
+    // The scene only: the project starts at its hero camera and opens in 3D, where the object is picked.
+    const p = await api('/api/projects', { scene: NEW.scene, title: $('#newtitle').value.trim() || null });
+    PROJECTS = await api('/api/projects'); toggleDrawer(false); POINTS = []; await openProject(p.name); setTool('select');
+  } catch (e) { msg.textContent = e.message; msg.className = 'msg err'; }
+};
+
+/* ---------- project state ---------- */
+async function openProject(name) {
+  P = await api('/api/projects/' + name);
+  if (!CAMS[P.scene]) CAMS[P.scene] = await api(`/api/scenes/${P.scene}/cameras`);
+  $('#ptitle').textContent = `${P.title} · ${P.scene} · camera ${P.view}`;
+  try { localStorage.setItem('spede-project', name); } catch (e) {}
+  // Nothing from the previous project carries over.
+  POINTS = []; SELVIEW = null; VIEWTAB = null; CAMPICK = null; JOB_TOOL = null; BANNER = null;
+  try {   // the last job of this project, if it did not finish, is still worth seeing
+    const last = (await api('/api/jobs')).find(j => j.name === name);
+    if (last && ['failed', 'interrupted', 'cancelled'].includes(last.status)) BANNER = last;
+  } catch (e) {}
+  // A hero check waiting for the user's choice keeps them on Select (the check), a result opens on Result.
+  TOOL = defaultTool();
+  // The last thing done was an extract: open on it.
+  if (!heroWaiting() && !P.job && latestIsExtract()) { TOOL = 'select'; SELVIEW = 'extract'; }
+  JOB_TOOL = P.job ? TOOL : null;   // reloaded during a job: its end still opens the next step
+  renderRail(); renderStage(); TOP();
+}
+async function refresh() {
+  if (!P) return;
+  P = await api('/api/projects/' + P.name);
+  $('#ptitle').textContent = `${P.title} · ${P.scene} · camera ${P.view}`;
+  renderRail(); renderStage();
+}
+async function pollJobs() {
+  let jobs = [];
+  try { jobs = await api('/api/jobs'); } catch (e) { return; }
+  // The chip speaks for the open project only (every project's jobs when none is open).
+  const mine = P ? jobs.filter(j => j.name === P.name) : jobs;
+  const running = mine.find(j => j.status === 'running');
+  const chip = $('#jobchip');
+  const stepName = (running?.steps.find(s => s.status === 'running') || {}).name;
+  chip.classList.toggle('busy', !!running);
+  chip.classList.toggle('fail', !running && mine[0]?.status === 'failed');
+  chip.querySelector('.txt').textContent = running ? `${KIND_TEXT[running.kind] || running.kind} · ${STEP_LABEL[stepName] || stepName || '…'}`
+    : mine.some(j => j.status === 'queued') ? 'Queued' : mine[0]?.status === 'failed' ? `${KIND_TEXT[mine[0].kind] || mine[0].kind} failed` : 'Idle';
+  if (!P) return;
+  const live = j => j.status === 'queued' || j.status === 'running';
+  const active = jobs.filter(j => j.name === P.name && live(j));
+  if (P.job) {
+    const now = jobs.find(x => x.id === P.job.id);
+    if (now && live(now)) {
+      // Still running: only the overlay changes; the stage (typed text, the 3D view) stays as it is.
+      P.job = now;
+      document.querySelectorAll('.wait').forEach(el => el.replaceWith(waitOverlay(now)));
+      return;
+    }
+    const finished = now || { ...P.job, status: 'done' };
+    await refresh();
+    if (['failed', 'interrupted', 'cancelled'].includes(finished.status)) {
+      BANNER = finished;
+      if (finished.kind === 'pick') SELVIEW = '3d';     // nothing picked: back to where the click was
+      renderStage();
+    }
+    // A new selection is checked before anything is removed.
+    if (finished.status === 'done' && SELECTING.has(finished.kind) && TOOL === JOB_TOOL) { SELVIEW = 'confirm'; renderStage(); }
+    // A finished extract shows the object, if the user is still where it was started from.
+    if (finished.status === 'done' && finished.kind === 'extract' && TOOL === JOB_TOOL && P.files?.extract_ply) {
+      TOOL = 'select'; SELVIEW = 'extract'; VIEWTAB = null; renderRail(); renderStage();
+    }
+    // Open the next step only if the user is still where the job was started from.
+    if (finished.status === 'done' && ADVANCING.has(finished.kind) && TOOL === JOB_TOOL && !heroWaiting()) {
+      TOOL = defaultTool(); renderRail(); renderStage(); TOP();
+    }
+    JOB_TOOL = null;
+    return;
+  }
+  if (active.length) { JOB_TOOL = JOB_TOOL || TOOL; refresh(); }   // started from another tab
+}
+setInterval(pollJobs, 2500);
+async function pollStatus() {
+  try { STATUS = await api('/api/status'); } catch (e) { STATUS = { comfy: false, sdk: false }; }
+  $('#jobchip').classList.toggle('down', !(STATUS.comfy && STATUS.sdk));
+  if (!P) renderStage();
+}
+setInterval(pollStatus, 15000);
+
+/* one floating tooltip for every element with data-tip ("Title|text") */
+const tipEl = $('#tip');
+function showTip(el) {
+  const [t, text] = (el.dataset.tip || '').split('|');
+  tipEl.replaceChildren(h('b', {}, t), text || '');
+  tipEl.hidden = false;
+  const r = el.getBoundingClientRect(), w = tipEl.offsetWidth, hh = tipEl.offsetHeight;
+  let x = r.right + 10, y = r.top + r.height / 2 - hh / 2;
+  if (x + w > innerWidth - 8) { x = Math.max(8, r.left + r.width / 2 - w / 2); y = r.top - hh - 10; if (y < 8) y = r.bottom + 10; }
+  tipEl.style.left = Math.min(x, innerWidth - w - 8) + 'px'; tipEl.style.top = Math.max(8, Math.min(y, innerHeight - hh - 8)) + 'px';
+}
+document.addEventListener('mouseover', e => { const el = e.target.closest('[data-tip]'); if (el) showTip(el); else tipEl.hidden = true; });
+document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el) showTip(el); });
+document.addEventListener('focusout', () => { tipEl.hidden = true; });
+document.addEventListener('scroll', () => { tipEl.hidden = true; }, true);
+
+// The logo leads back to the start page.
+const home = () => { P = null; TOOL = 'select'; $('#ptitle').textContent = 'Splat Edit Engine'; renderRail(); renderStage(); TOP(); };
+$('#brand').onclick = home;
+$('#brand').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); home(); } };
+$('#theme').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('spede-theme', document.documentElement.dataset.theme); } catch (e) {}
+};
+try { const t = localStorage.getItem('spede-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+(async () => {
+  [SCENES, PROJECTS] = await Promise.all([api('/api/scenes'), api('/api/projects')]);
+  await pollStatus();
+  let last = null; try { last = localStorage.getItem('spede-project'); } catch (e) {}
+  if (last && PROJECTS.some(p => p.name === last)) await openProject(last);
+  else { TOOL = 'select'; renderRail(); renderStage(); }
+  pollJobs();
+})();
+</script>
+</body>
+</html>

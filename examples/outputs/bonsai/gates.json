@@ -1,0 +1,134 @@
+{
+  "removal": {
+    "name": "G1 removal residual",
+    "passed": true,
+    "reason": "OK",
+    "raw": {
+      "views": {
+        "DSCF5565": 0.0,
+        "DSCF5566": 0.00011445139630703495,
+        "DSCF5579": 0.0004734676038897185,
+        "DSCF5592": 0.0035489244586079526,
+        "DSCF5606": 0.005540689438060758,
+        "DSCF5618": 0.009148802583191317,
+        "DSCF5632": 0.010134930719428814,
+        "DSCF5644": 2.947939390366134e-05,
+        "DSCF5658": 0.00485381321977242,
+        "DSCF5671": 0.011660942204130094,
+        "DSCF5697": 0.004504992311191007,
+        "DSCF5711": 0.0021987951807228914,
+        "DSCF5724": 0.008386090900500803,
+        "DSCF5737": 0.0007533641606484127,
+        "DSCF5751": 0.005510548176173048,
+        "DSCF5763": 0.0,
+        "DSCF5777": 0.0009328358208955224,
+        "DSCF5790": 0.0,
+        "DSCF5803": 0.0015365366463990166,
+        "DSCF5816": 0.0,
+        "DSCF5830": 0.00029504854889759134,
+        "DSCF5842": 0.0004024491907896628,
+        "DSCF5856": 0.001137808714276153
+      },
+      "at_depth": {
+        "DSCF5565": 0.0,
+        "DSCF5566": 0.0,
+        "DSCF5579": 0.0,
+        "DSCF5592": 0.0,
+        "DSCF5606": 0.0,
+        "DSCF5618": 0.0,
+        "DSCF5632": 0.0,
+        "DSCF5644": 0.0,
+        "DSCF5658": 0.0,
+        "DSCF5671": 0.0,
+        "DSCF5697": 0.0,
+        "DSCF5711": 0.0,
+        "DSCF5724": 0.0,
+        "DSCF5737": 0.0,
+        "DSCF5751": 0.0,
+        "DSCF5763": 0.0,
+        "DSCF5777": 0.0,
+        "DSCF5790": 0.0,
+        "DSCF5803": 0.0,
+        "DSCF5816": 0.0,
+        "DSCF5830": 0.0,
+        "DSCF5842": 0.0,
+        "DSCF5856": 0.0
+      },
+      "max": 0.011660942204130094,
+      "mean": 0.003094085681208082,
+      "worst_view": "DSCF5671",
+      "at_depth_max": 0.0,
+      "at_depth_worst_view": "DSCF5565",
+      "judged": 23,
+      "skipped": {
+        "DSCF5684": "object mostly hidden"
+      }
+    }
+  },
+  "plane": {
+    "name": "G2 scene-aligned MoGe depth",
+    "passed": true,
+    "support_fraction": 0.6665,
+    "rmse": 0.04461452274104376,
+    "ring": "actual source depth anchors",
+    "depth_model": "monotone"
+  },
+  "patch": {
+    "name": "G3 rendered patch agreement",
+    "passed": true,
+    "coverage": 1.0,
+    "rgb_mae": 0.03307728469371796,
+    "minimum_coverage": 0.8,
+    "maximum_mae": 0.2,
+    "judged_pixels": 32992
+  },
+  "heldout": {
+    "name": "H1 independent capture-view locality",
+    "passed": true,
+    "judged_views": 4,
+    "views": [
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.0021519807633012533,
+        "outside_changed_fraction": 0.007750345997589178,
+        "judged_pixels": 223990,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF5566"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.004969928413629532,
+        "outside_changed_fraction": 0.020471615565356822,
+        "judged_pixels": 225141,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF5579"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.005409276112914085,
+        "outside_changed_fraction": 0.0226091809930498,
+        "judged_pixels": 225749,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF5592"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.0068673924542963505,
+        "outside_changed_fraction": 0.02763622552100525,
+        "judged_pixels": 221159,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF5606"
+      }
+    ],
+    "criterion": "RGB outside the SAM selected-object mask remains source-like",
+    "not_a_ground_truth_patch_completeness_test": true
+  }
+}

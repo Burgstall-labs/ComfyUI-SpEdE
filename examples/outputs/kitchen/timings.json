@@ -1,0 +1,33 @@
+{
+  "source": "Mip-NeRF 360 kitchen, hero DSCF0669 'lego bulldozer', 18 Oct 2026, RTX 5090, ComfyUI 0.41.0",
+  "workflow": "spede_local_sam31_qwen21_moge3_depthfill_api.json",
+  "patch_mode": "depthfill",
+  "comfy_job_seconds": 61,
+  "comfy_job_seconds_basis": "UI job log, submitted 13:21:32, succeeded 13:22:33 (local time)",
+  "births": 43880,
+  "g3_rgb_mae": 0.035,
+  "h1": "pass (4/4 views)",
+  "doc": "docs/DEPTH_FILL_V2.md, 18 October 2026 UI runs table",
+  "allround": {
+    "method": "progressive",
+    "seconds": 1460,
+    "seconds_basis": "wall-clock of the whole UI all-around step (stage 1 + progressive); stage 1 prompt 181 s, progressive prompt about 21 min",
+    "cameras_cleaned": 24,
+    "surface_discs": 510148,
+    "births": 4803,
+    "trainable": 387408,
+    "pruned": 7057,
+    "total_gaussians": 1882230,
+    "fit_mae_hero": 0.059,
+    "fit_mae_mean": 0.05,
+    "comfy_output_gb": 2.1,
+    "ram_peak_gb": 26,
+    "ram_note": "about 26 GB is the scheduler's peak sample for the 21 Oct progressive run; the 23 Oct run ran under a 30 GB reservation",
+    "date": "2026-10-23",
+    "source": "spede_kitchen_verify_kitchen_1023_123038, 23 Oct 2026, UI-driven, ComfyUI 0.41.0, RTX 5090",
+    "pictures": [
+      "progressive_sheet.png",
+      "hero_clean.png"
+    ]
+  }
+}

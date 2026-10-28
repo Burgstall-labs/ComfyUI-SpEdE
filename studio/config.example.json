@@ -1,0 +1,32 @@
+{
+  "comment": "SpEdE UI configuration. Copy this file to config.json next to server.py (or point SPEDE_CONFIG at a copy). Every scalar key can be overridden by SPEDE_<KEY> in the environment, e.g. SPEDE_COMFY_ROOT; scenes is read from this file only. Every scene needs hero, source_ply and cameras. Scene paths are relative to scene_root unless absolute. comfy_host/comfy_port is the raw ComfyUI server (its /system_stats says it is alive); comfy_sdk_url is the comfy-api-proxy in front of it; comfy_root is the ComfyUI directory whose output/ folder receives the results. gpu_turns is the owner's shared-GPU turn system and stays off elsewhere. patch_mode=depthfill (the default) rebuilds the hidden surface on MoGe depth aligned to the scene; patch_mode=patch is the planar fallback. allround_mode=independent (the default) is the all-around fill that cleans every camera on its own with Qwen-Image 2.1 turbo and fits the fill to all of them at once; allround_mode=progressive cleans one camera at a time (slower); allround_mode=orbit is the experimental MiniMax H3 orbit-video path.",
+  "comfy_host": "127.0.0.1",
+  "comfy_port": 8188,
+  "comfy_sdk_url": "http://127.0.0.1:8189",
+  "comfy_root": "/path/to/ComfyUI",
+  "cuda_device": "0",
+  "runs": "~/spede-runs",
+  "accept_qwen_research_license_comment": "Qwen-Image 2.1 and its Qwen3-VL text encoder are Research License models: read https://huggingface.co/Qwen/Qwen-Image-2.1/blob/main/LICENSE and set accept_qwen_research_license to true only for permitted local use. Downloading the weights does not grant commercial rights to the output. Without it Remove, the all-around fill and a hero check that Qwen3-VL names are refused; Extract and a hero check with a typed name still run.",
+  "accept_qwen_research_license": false,
+  "gpu_turns": false,
+  "scene_root": "/path/to/3dgs_scenes",
+  "scenes": {
+    "bonsai": {
+      "title": "Bonsai",
+      "source_ply": "bonsai/point_cloud.ply",
+      "cameras": "bonsai/cameras_mipnerf360/edit_cameras.npz",
+      "heldout": "bonsai/cameras_mipnerf360/heldout_cameras.npz",
+      "hero": "DSCF5565"
+    },
+    "kitchen": {
+      "title": "Kitchen",
+      "source_ply": "kitchen/point_cloud.ply",
+      "cameras": "kitchen/cameras_mipnerf360/edit_cameras.npz",
+      "heldout": "kitchen/cameras_mipnerf360/heldout_cameras.npz",
+      "photos": "/data/mipnerf360/kitchen/images",
+      "hero": "DSCF0669"
+    }
+  },
+  "patch_mode": "depthfill",
+  "allround_mode": "independent"
+}

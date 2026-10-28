@@ -1,0 +1,134 @@
+{
+  "removal": {
+    "name": "G1 removal residual",
+    "passed": true,
+    "reason": "OK",
+    "raw": {
+      "views": {
+        "DSCF0669": 0.017045753467898918,
+        "DSCF0657": 0.0027738693467336682,
+        "DSCF0681": 0.024239057987113975,
+        "DSCF0693": 0.010793439716312057,
+        "DSCF0705": 0.04352389615842139,
+        "DSCF0717": 0.007657468366251109,
+        "DSCF0729": 0.00043563493792202136,
+        "DSCF0741": 0.0024867603039373707,
+        "DSCF0754": 0.005145260686686882,
+        "DSCF0765": 0.0025855210819411296,
+        "DSCF0778": 0.008697261287934863,
+        "DSCF0789": 0.03688049463819921,
+        "DSCF0802": 0.04573927065244356,
+        "DSCF0813": 0.0008315227595826292,
+        "DSCF0826": 0.009964153350750349,
+        "DSCF0837": 0.0014594182228266277,
+        "DSCF0850": 0.006027663804407597,
+        "DSCF0862": 0.012374991006547233,
+        "DSCF0874": 0.014914413045680138,
+        "DSCF0886": 0.008976072211996672,
+        "DSCF0898": 0.006049228201919066,
+        "DSCF0910": 0.001218274111675127,
+        "DSCF0922": 1.9968449849238205e-05,
+        "DSCF0934": 0.009973088491372488
+      },
+      "at_depth": {
+        "DSCF0669": 0.0,
+        "DSCF0657": 0.0,
+        "DSCF0681": 0.0,
+        "DSCF0693": 0.0,
+        "DSCF0705": 0.0,
+        "DSCF0717": 0.0,
+        "DSCF0729": 0.0,
+        "DSCF0741": 0.0,
+        "DSCF0754": 0.0,
+        "DSCF0765": 0.0,
+        "DSCF0778": 0.0,
+        "DSCF0789": 0.0,
+        "DSCF0802": 0.0,
+        "DSCF0813": 0.0,
+        "DSCF0826": 0.0,
+        "DSCF0837": 0.0,
+        "DSCF0850": 0.0,
+        "DSCF0862": 0.0,
+        "DSCF0874": 0.0,
+        "DSCF0886": 0.0,
+        "DSCF0898": 0.0,
+        "DSCF0910": 0.0,
+        "DSCF0922": 0.0,
+        "DSCF0934": 0.0
+      },
+      "max": 0.04573927065244356,
+      "mean": 0.01165885342868347,
+      "worst_view": "DSCF0802",
+      "at_depth_max": 0.0,
+      "at_depth_worst_view": "DSCF0669",
+      "judged": 24,
+      "skipped": {}
+    }
+  },
+  "plane": {
+    "name": "G2 scene-aligned MoGe depth",
+    "passed": true,
+    "support_fraction": 0.8433,
+    "rmse": 0.016832721729300962,
+    "ring": "actual source depth anchors",
+    "depth_model": "affine"
+  },
+  "patch": {
+    "name": "G3 rendered patch agreement",
+    "passed": true,
+    "coverage": 1.0,
+    "rgb_mae": 0.03473754599690437,
+    "minimum_coverage": 0.8,
+    "maximum_mae": 0.2,
+    "judged_pixels": 64501
+  },
+  "heldout": {
+    "name": "H1 independent capture-view locality",
+    "passed": true,
+    "judged_views": 4,
+    "views": [
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.012038505636155605,
+        "outside_changed_fraction": 0.0296555212250805,
+        "judged_pixels": 199693,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF0657"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.01175349298864603,
+        "outside_changed_fraction": 0.030217700523156296,
+        "judged_pixels": 207395,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF0681"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.010963783599436283,
+        "outside_changed_fraction": 0.026370825754112235,
+        "judged_pixels": 205606,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF0693"
+      },
+      {
+        "name": "H1 heldout outside-mask preservation",
+        "passed": true,
+        "outside_rgb_mae": 0.009569947607815266,
+        "outside_changed_fraction": 0.024398254139754494,
+        "judged_pixels": 210097,
+        "maximum_mean_abs": 0.03,
+        "maximum_changed_fraction": 0.07,
+        "view_id": "DSCF0705"
+      }
+    ],
+    "criterion": "RGB outside the SAM selected-object mask remains source-like",
+    "not_a_ground_truth_patch_completeness_test": true
+  }
+}

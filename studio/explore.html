@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpEdE Explore — Splat Edit Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root { --ink: #141414; --paper: #ECEBE6; --red: #D7263D; --yellow: #F4B400; --blue: #1B4F9C; }
+  html, body { margin: 0; height: 100%; background: #0d0e10; color: var(--paper); overflow: hidden;
+    font: 13px/1.4 "IBM Plex Mono", ui-monospace, monospace; }
+  #view { position: absolute; inset: 0; cursor: crosshair; }
+  body.look #view { cursor: grab; }
+  .tag { position: absolute; left: 12px; top: 12px; z-index: 5; font: 700 12px/1 Jost, sans-serif; letter-spacing: .14em;
+    text-transform: uppercase; background: var(--paper); color: var(--ink); padding: 7px 10px 6px; pointer-events: none; }
+  #help { position: absolute; left: 12px; bottom: 12px; z-index: 5; background: rgba(20, 20, 20, .78); padding: 8px 10px;
+    pointer-events: none; max-width: calc(100% - 48px); }
+  #help b { color: var(--yellow); font-weight: 500; }
+  #busy { position: absolute; inset: 0; z-index: 6; display: none; place-items: center; background: rgba(13, 14, 16, .6);
+    font: 700 14px/1.4 Jost, sans-serif; letter-spacing: .1em; text-transform: uppercase; text-align: center; }
+  #busy.on { display: grid; }
+  #mark { position: absolute; z-index: 5; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 3px solid var(--red);
+    border-radius: 50%; display: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="tag" id="tag">Explore</div>
+<div id="help"><b>W A S D</b> move · <b>Q E</b> down / up · <b>Shift</b> faster · <b>drag</b> look around · <b>click</b> an object to select it</div>
+<div id="mark"></div>
+<div id="busy"><span id="busytext">Loading the splat…</span></div>
+<script type="importmap">
+{ "imports": { "three": "/viewer/three.module.js", "@mkkellogg/gaussian-splats-3d": "/viewer/gaussian-splats-3d.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
+
+const params = new URLSearchParams(location.search);
+const scene = params.get('scene'), project = params.get('project');
+// (default): the source scene, click an object to select it in the best real camera.
+// mode=extract: the cleaned object. mode=result: the patched scene. Both view only.
+const mode = params.get('mode');
+const viewOnly = mode === 'extract' || mode === 'result';
+if (viewOnly) document.body.classList.add('look');
+const root = document.getElementById('view');
+const busy = (text) => { document.getElementById('busytext').textContent = text || ''; document.getElementById('busy').classList.toggle('on', !!text); };
+busy('Loading the splat…');
+const view = encodeURIComponent(params.get('view') || '');
+const infoUrl = mode === 'extract' ? `/api/projects/${project}/extract/explore?view=${view}`
+              : mode === 'result' ? `/api/projects/${project}/explore?view=${view}`
+              : `/api/scenes/${scene}/explore?view=${view}`;
+const infoRes = await fetch(infoUrl);
+if (!infoRes.ok) { busy('Could not load the scene: ' + (await infoRes.text()).slice(0, 200)); throw new Error('explore'); }
+const info = await infoRes.json();
+const cam = info.camera;
+// pos, quat (x, y, z, w), fov: start where the user last picked from (Back to 3D) instead of at a real camera.
+const nums = k => (params.get(k) || '').split(',').filter(Boolean).map(Number);
+const pose = { position: nums('pos'), quaternion: nums('quat'), fov: Number(params.get('fov')) };
+const posed = pose.position.length === 3 && pose.quaternion.length === 4 && [...pose.position, ...pose.quaternion].every(Number.isFinite);
+if (posed) {
+  const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion(...pose.quaternion));
+  cam.position = pose.position;
+  cam.lookAt = new THREE.Vector3(...pose.position).addScaledVector(forward, 0.5 * info.scale).toArray();
+  if (pose.fov > 0) cam.fov = pose.fov;
+}
+document.getElementById('tag').textContent = mode === 'extract' ? `Extracted object · from ${cam.view}` : mode === 'result' ? `Edited scene · from ${cam.view}`
+  : posed ? 'Explore · where you last clicked' : `Explore · from ${cam.view}`;
+if (viewOnly) document.getElementById('help').innerHTML = '<b>W A S D</b> move · <b>Q E</b> down / up · <b>Shift</b> faster · '
+  + (info.object ? '<b>drag</b> turn around the object · <b>wheel</b> closer / farther' : '<b>drag</b> look around');
+// The extracted object: the server's lookAt is its centre, so the orbit pivots there.
+const viewer = new GaussianSplats3D.Viewer({ rootElement: root, cameraUp: cam.up,
+  initialCameraPosition: cam.position, initialCameraLookAt: cam.lookAt,
+  sharedMemoryForWorkers: false, gpuAcceleratedSort: false, sphericalHarmonicsDegree: 0 });
+// The URL carries a cache-buster, so the format cannot come from its extension.
+await viewer.addSplatScene(info.splat, { format: GaussianSplats3D.SceneFormat.Splat, progressiveLoad: true,
+                                         showLoadingUI: false, splatAlphaRemovalThreshold: 5 });
+viewer.start();
+busy('');
+// The bundled OrbitControls pans with W A S D (listening on window): W A S D are ours here.
+for (const ctl of [viewer.perspectiveControls, viewer.orthographicControls]) {
+  if (ctl) { ctl.stopListenToKeyEvents?.(); ctl.keys = {}; }
+}
+if (viewer.camera && cam.fov) { viewer.camera.fov = cam.fov; viewer.camera.updateProjectionMatrix(); }
+
+// Fly: the orbit target stays a fixed distance ahead, so dragging looks around.
+const keys = new Set();
+addEventListener('keydown', e => { if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'].includes(e.code)) { keys.add(e.code); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('blur', () => keys.clear());
+root.addEventListener('pointerenter', () => window.focus());
+let last = performance.now();
+(function fly(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  const c = viewer.camera, ctl = viewer.controls;
+  if (c && ctl && keys.size) {
+    const speed = (info.object ? Math.max(info.object.radius, 1e-3) : info.scale * 0.5) * (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 3 : 1) * dt;
+    const forward = new THREE.Vector3(); c.getWorldDirection(forward);
+    const right = new THREE.Vector3().crossVectors(forward, c.up).normalize();
+    const move = new THREE.Vector3();
+    if (keys.has('KeyW')) move.add(forward); if (keys.has('KeyS')) move.sub(forward);
+    if (keys.has('KeyD')) move.add(right); if (keys.has('KeyA')) move.sub(right);
+    if (keys.has('KeyE')) move.add(c.up); if (keys.has('KeyQ')) move.sub(c.up);
+    if (move.lengthSq() > 0) {
+      move.normalize().multiplyScalar(speed);
+      c.position.add(move); ctl.target.add(move); ctl.update();
+    }
+  }
+  requestAnimationFrame(fly);
+})(last);
+
+// A click (not a drag) picks: the server finds the point under it and the
+// real camera to select it in, then runs the hero check there.
+let down = null;
+root.addEventListener('pointerdown', e => { if (e.button === 0) down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+root.addEventListener('pointerup', async e => {
+  if (!down || e.button !== 0) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), held = performance.now() - down.t;
+  down = null;
+  if (moved > 5 || held > 450 || !project || viewOnly) return;
+  const r = root.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  const mark = document.getElementById('mark');
+  mark.style.left = `${e.clientX - r.left}px`; mark.style.top = `${e.clientY - r.top}px`; mark.style.display = 'block';
+  const c = viewer.camera;
+  // The frame the user clicked in, small, with the click: the Studio shows it next to the camera photo.
+  let shot = null;
+  try {
+    viewer.render();
+    const src = viewer.renderer.domElement, small = document.createElement('canvas');
+    small.width = 320; small.height = Math.max(1, Math.round(320 * src.height / src.width));
+    const g = small.getContext('2d');
+    g.fillStyle = '#0d0e10'; g.fillRect(0, 0, small.width, small.height); g.drawImage(src, 0, 0, small.width, small.height);
+    g.strokeStyle = '#D7263D'; g.lineWidth = 3; g.beginPath(); g.arc(x * small.width, y * small.height, 8, 0, 7); g.stroke();
+    shot = small.toDataURL('image/jpeg', 0.82);
+  } catch (err) { shot = null; }
+  busy('Jumping to the camera that sees it best…');
+  try {
+    const res = await fetch(`/api/projects/${project}/pick`, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ position: c.position.toArray(), quaternion: c.quaternion.toArray(), fov: c.fov,
+                             aspect: r.width / r.height, x, y }) });
+    const job = await res.json();
+    if (!res.ok) throw new Error(job.detail || res.statusText);
+    parent.postMessage({ type: 'spede-pick', job: job.id, shot }, location.origin);
+  } catch (err) {
+    busy(''); mark.style.display = 'none';
+    parent.postMessage({ type: 'spede-pick-error', message: String(err.message || err) }, location.origin);
+  }
+});
+</script>
+</body>
+</html>

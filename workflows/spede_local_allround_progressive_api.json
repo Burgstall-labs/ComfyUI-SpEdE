@@ -1,0 +1,92 @@
+{
+ "90": {
+  "class_type": "SpEdE_LocalAllRoundLoad",
+  "inputs": {
+   "allround_dir": "spede/allround/JOB",
+   "require": "hero_clean"
+  }
+ },
+ "30": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "qwen_image_2.1_turbo_int8_convrot.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "31": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+   "type": "qwen_image",
+   "device": "default"
+  }
+ },
+ "32": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+  }
+ },
+ "33": {
+  "class_type": "QwenImage21Cache",
+  "inputs": {
+   "model": [
+    "30",
+    0
+   ],
+   "device": "auto",
+   "dtype": "default"
+  }
+ },
+ "61": {
+  "class_type": "LoadMoGeModel",
+  "inputs": {
+   "model_name": "moge_3_vitl_fp16.safetensors"
+  }
+ },
+ "95": {
+  "class_type": "SpEdE_LocalAllRoundProgressive",
+  "inputs": {
+   "allround": [
+    "90",
+    0
+   ],
+   "model": [
+    "33",
+    0
+   ],
+   "clip": [
+    "31",
+    0
+   ],
+   "vae": [
+    "32",
+    0
+   ],
+   "moge_model": [
+    "61",
+    0
+   ],
+   "hero_clean": [
+    "90",
+    2
+   ],
+   "seed": 241007,
+   "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0",
+   "prompt": "Image 1 is a render of a 3D scan that has been repaired where an object was removed. The repair shows as a blotchy area: lighter smudged patches, dark stains, streaks and magenta missing parts. Clean it up so the repaired area looks like a natural, continuous part of the scene, matching the surrounding surfaces, textures, lighting and shading in image 1 and consistent with image 2, which shows the same place from a nearby viewpoint. Do not add any objects. Keep the composition, the camera and everything that is not part of the repair exactly unchanged.",
+   "step_iterations": 1500,
+   "final_iterations": 6000,
+   "output_path": "spede/allround/JOB/progressive/progressive_scene.ply",
+   "method": "independent"
+  }
+ },
+ "96": {
+  "class_type": "PreviewImage",
+  "inputs": {
+   "images": [
+    "95",
+    2
+   ]
+  }
+ }
+}

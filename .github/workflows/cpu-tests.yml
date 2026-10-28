@@ -1,0 +1,46 @@
+name: SpEdE CPU tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "requirements.txt"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      # requirements.txt without gsplat: gsplat needs a CUDA build.
+      - run: python -m pip install "numpy>=1.26" "scipy>=1.11" "Pillow>=10" "plyfile>=1.1"
+      - run: python -m pip install pytest httpx fastapi pydantic comfy-sdk==0.4.0
+      - name: Compile Python source
+        run: python -m compileall -q .
+      - name: Import the node pack
+        run: |
+          python -c "import nodes; n=len(nodes.NODE_CLASS_MAPPINGS); print(n); assert n==33, n"
+      - name: CPU tests
+        run: python -m pytest -q tests/
+      - name: Parse every workflow via the real Comfy SDK without submitting
+        env:
+          COMFY_BASE_URL: http://127.0.0.1:8189
+        run: |
+          python - <<'PY'
+          import glob
+          from comfy_sdk import Comfy
+          client = Comfy()
+          paths = sorted(glob.glob("workflows/*_api.json"))
+          assert paths, "no workflows found"
+          for path in paths:
+              assert client.workflows.from_file(path) is not None, path
+          print(f"parsed {len(paths)} workflows offline; no job submitted")
+          PY

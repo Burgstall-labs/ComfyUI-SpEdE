@@ -1,0 +1,5 @@
+numpy>=1.26
+scipy>=1.11
+Pillow>=10
+plyfile>=1.1
+gsplat>=1.5

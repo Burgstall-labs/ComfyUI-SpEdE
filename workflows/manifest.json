@@ -1,0 +1,92 @@
+{
+  "schema": "spede-local-workflows-v1",
+  "source": "Comfy-Org native core nodes / actual Comfy API formats",
+  "qwen_reference": "https://github.com/Comfy-Org/workflow_templates/blob/main/templates/image_qwen_image_2_1_image_edit.json",
+  "sam_reference": "https://github.com/Comfy-Org/ComfyUI/blob/master/blueprints/Image%20Segmentation%20(SAM3).json",
+  "files": {
+    "spede_local_sam31_extract_api.json": {
+      "output_node_ids": [
+        "50"
+      ],
+      "notes": "Native SAM3.1 + AccGS-free 3D extraction, rescue and depth clean. GPU-verified in ComfyUI on kitchen and bonsai, 8–9 Oct 2026."
+    },
+    "spede_local_sam31_qwen21_patch_api.json": {
+      "output_node_ids": [
+        "41",
+        "42",
+        "43",
+        "44",
+        "45"
+      ],
+      "notes": "Native SAM3.1 and Qwen Image 2.1 + conservative planar Gaussian patch (fallback). Not arbitrary 3D inpaint. GPU-verified in ComfyUI on kitchen and bonsai, 8–9 Oct 2026."
+    },
+    "spede_local_click_sam31_qwen3vl_hero_api.json": {
+      "output_node_ids": [
+        "15",
+        "16"
+      ],
+      "notes": "Hero-view check before multiview search: SAM3.1 click mask, native Generate Text (Qwen3-VL 8B) names it, SAM3.1 finds the name in the same view, SpEdE compares the two and writes the hero mask for Extract/Patch (hero_mask_path)."
+    },
+    "spede_local_sam31_qwen21_moge3_depthfill_api.json": {
+      "output_node_ids": [
+        "41",
+        "42",
+        "43",
+        "44",
+        "45",
+        "65"
+      ],
+      "notes": "Native SAM 3.1 + Qwen 2.1 -> MoGe-3 raw camera depth -> scene anchored depth -> genuine depth-driven Gaussian births -> G3/H1. The UI's default Remove; GPU-verified on kitchen and bonsai, 17–18 Oct 2026."
+    },
+    "spede_local_replace_prepare_api.json": {
+      "output_node_ids": [
+        "41",
+        "44",
+        "45",
+        "65",
+        "87",
+        "88"
+      ],
+      "notes": "Stretch/demo only: source selection + Qwen removal/fill depth + Qwen scene-aware insertion + SAM new object + RGBA crop, candidate shadow, source-scene scale prior. TripoSplat inference / 3D registration not automatically connected; not complete Replace. Graph validated via the Comfy SDK builder; not GPU-run end to end."
+    },
+    "spede_local_allround_stage1_api.json": {
+      "output_node_ids": [
+        "80",
+        "81",
+        "82",
+        "83"
+      ],
+      "notes": "All-around fill, stage 1 for the orbit path, after a finished depth-fill run: plan (chain cameras, orbit through real cameras), Qwen-Image 2.1 clean hero at 1024 px and a 10-camera Qwen chain, MoGe-3 multi-view births, CrossView-Warp conditioning of the orbit. Results on disk for stage 2 (experimental). GPU-verified on kitchen, 19 Oct 2026."
+    },
+    "spede_local_allround_hero_api.json": {
+      "output_node_ids": [
+        "80"
+      ],
+      "notes": "All-around fill, lean stage 1 (product path), after a finished depth-fill run: plan (state.json) and the Qwen-Image 2.1 clean hero at 1024 px (hero_clean.png), all the independent and progressive fills read; no chain, MoGe births or warp."
+    },
+    "spede_local_allround_stage2_api.json": {
+      "output_node_ids": [
+        "92",
+        "93"
+      ],
+      "notes": "All-around fill, stage 2: MiniMax H3 ref2va + CrossView-Warp LoRA orbit video (260 frames, 1024 px), off-path frames dropped, anchored multi-view optimisation of the hole's Gaussians. Separate prompt so the Qwen and H3 models are never in RAM together. Experimental, not in the UI. GPU-verified on kitchen, 19 Oct 2026."
+    },
+    "spede_local_allround_progressive_api.json": {
+      "output_node_ids": [
+        "96"
+      ],
+      "notes": "All-around fill (product path), after the lean stage 1 (or the full one): SpEdE_LocalAllRoundProgressive with method independent (default: Qwen-Image 2.1 turbo cleans every camera that sees the hole on its own photo, support-surface discs painted from above, one optimisation; kitchen experiment 23 Oct 2026) or progressive (camera by camera with births, short optimisations; verified on bonsai and kitchen 21 and 23 Oct 2026)."
+    },
+    "spede_local_replace_api.json": {
+      "output_node_ids": [
+        "42",
+        "43",
+        "44",
+        "87"
+      ],
+      "notes": "Replace (inverse extract): the source scene without exactly the extracted object (SpEdE_LocalReplaceBase: Extract's trimmed object set; its contact footprint filled, from the Remove fill if any) in the hero camera, or a Remove's cleaned hero, Qwen-Image 2.1 turbo (8 steps) draws the new object there (image_2 the original photo for position and size, optional image_3 a reference picture), SAM 3.1 cuts it out, native TripoSplat makes Gaussians of it, SpEdE_LocalPlaceGenerated stands it on the removed object's support plane at the chosen size, fills the part of the old footprint it leaves bare and adds a contact shadow. Without an extract on record build_replace_graph adds the Extract nodes in front. The UI's Replace."
+    }
+  },
+  "licensed_weights": "Bring-your-own Qwen Image 2.1 research weights; no checkpoint bundled.",
+  "depth_source": "ComfyUI core LoadMoGeModel + MoGeInference returns MOGE_GEOMETRY depth (not normalized MoGeRender visualization)"
+}

@@ -1,0 +1,118 @@
+{
+  "1": {
+    "class_type": "SpEdE_LocalLoadScene",
+    "inputs": {
+      "source_ply": "/PATH/TO/source_scene.ply"
+    }
+  },
+  "2": {
+    "class_type": "SpEdE_LocalLoadCameras",
+    "inputs": {
+      "camera_targets_npz": "/PATH/TO/camera_pack.npz"
+    }
+  },
+  "3": {
+    "class_type": "SpEdE_LocalCameraImages",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    }
+  },
+  "21": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "20",
+        1
+      ],
+      "text": "the object to remove"
+    }
+  },
+  "22": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "image": [
+        "3",
+        0
+      ],
+      "conditioning": [
+        "21",
+        0
+      ],
+      "threshold": 0.4,
+      "refine_iterations": 2,
+      "individual_masks": true
+    }
+  },
+  "23": {
+    "class_type": "SpEdE_LocalMasksToReport",
+    "inputs": {
+      "cameras": [
+        "2",
+        0
+      ],
+      "masks": [
+        "22",
+        0
+      ],
+      "boxes": [
+        "22",
+        1
+      ],
+      "view_ids_json": [
+        "3",
+        1
+      ],
+      "hero_view_id": "camera_0",
+      "output_subdir": "spede/local/masks"
+    }
+  },
+  "24": {
+    "class_type": "SpEdE_LocalSelectMultiView",
+    "inputs": {
+      "scene": [
+        "1",
+        0
+      ],
+      "cameras": [
+        "2",
+        0
+      ],
+      "segment_report_json": [
+        "23",
+        0
+      ],
+      "hero_mask_png": [
+        "23",
+        1
+      ],
+      "output_subdir": "spede/local/selection",
+      "include_footprint": false,
+      "device": "cuda"
+    }
+  },
+  "50": {
+    "class_type": "SpEdE_LocalExtract",
+    "inputs": {
+      "selection": [
+        "24",
+        0
+      ],
+      "output_subdir": "spede/local/extract",
+      "surface_rescue": true,
+      "depth_clean": true
+    }
+  }
+}

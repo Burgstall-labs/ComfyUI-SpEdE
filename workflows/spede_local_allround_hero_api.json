@@ -1,0 +1,136 @@
+{
+ "70": {
+  "class_type": "SpEdE_LocalAllRoundStart",
+  "inputs": {
+   "run_dir": "spede/local/JOB",
+   "source_ply": "/PATH/TO/source_scene.ply",
+   "camera_targets_npz": "/PATH/TO/camera_pack.npz",
+   "object_text": "the object to remove",
+   "output_subdir": "spede/allround/JOB",
+   "chain_views": 10,
+   "orbit_frames": 260,
+   "resolution": 1024,
+   "photo_dir": "",
+   "device": "cuda"
+  }
+ },
+ "30": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "31": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+   "type": "qwen_image",
+   "device": "default"
+  }
+ },
+ "32": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+  }
+ },
+ "33": {
+  "class_type": "QwenImage21Cache",
+  "inputs": {
+   "model": [
+    "30",
+    0
+   ],
+   "device": "auto",
+   "dtype": "default"
+  }
+ },
+ "34": {
+  "class_type": "TextEncodeQwenImage21",
+  "inputs": {
+   "clip": [
+    "31",
+    0
+   ],
+   "vae": [
+    "32",
+    0
+   ],
+   "resolution": 0,
+   "negative_prompt": "",
+   "prompt": "Use <image1> as the authoritative original camera image. Remove the segmented foreground object from <image1>. Use <image2>, a Gaussian-splat render of the same camera after that object was removed, as evidence of the real background and missing regions. Reconstruct only the background hidden by the removed object, preserving original perspective, surfaces, illumination, and all other original pixels. Do not recreate the removed object. The resulting image must retain the same camera geometry as <image1>.",
+   "images.image_1": [
+    "70",
+    1
+   ],
+   "images.image_2": [
+    "70",
+    2
+   ]
+  }
+ },
+ "35": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "33",
+    0
+   ],
+   "positive": [
+    "34",
+    0
+   ],
+   "negative": [
+    "34",
+    1
+   ],
+   "latent_image": [
+    "34",
+    2
+   ],
+   "seed": 241007,
+   "steps": 25,
+   "cfg": 1,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "denoise": 1
+  }
+ },
+ "36": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "35",
+    0
+   ],
+   "vae": [
+    "32",
+    0
+   ]
+  }
+ },
+ "74": {
+  "class_type": "SpEdE_LocalAllRoundHero",
+  "inputs": {
+   "allround": [
+    "70",
+    0
+   ],
+   "hero_clean": [
+    "36",
+    0
+   ]
+  }
+ },
+ "80": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "74",
+    1
+   ],
+   "filename_prefix": "spede/allround/JOB/hero_clean"
+  }
+ }
+}

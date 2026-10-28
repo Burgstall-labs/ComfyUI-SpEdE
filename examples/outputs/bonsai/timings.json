@@ -1,0 +1,33 @@
+{
+  "source": "Mip-NeRF 360 bonsai, hero DSCF5565 'bonsai tree and stand', 18 Oct 2026, RTX 5090, ComfyUI 0.41.0",
+  "workflow": "spede_local_sam31_qwen21_moge3_depthfill_api.json",
+  "patch_mode": "depthfill",
+  "comfy_job_seconds": 41,
+  "comfy_job_seconds_basis": "UI job log, submitted 13:22:56, succeeded 13:23:37 (local time)",
+  "births": 9350,
+  "g3_rgb_mae": 0.033,
+  "h1": "pass (4/4 views)",
+  "doc": "docs/DEPTH_FILL_V2.md, 18 October 2026 UI runs table",
+  "allround": {
+    "method": "progressive",
+    "seconds": 950,
+    "seconds_basis": "wall-clock of the whole UI all-around step (stage 1 + progressive)",
+    "cameras_cleaned": 24,
+    "surface_discs": 165856,
+    "births": 35248,
+    "trainable": 153591,
+    "pruned": 3280,
+    "total_gaussians": 1250655,
+    "fit_mae_hero": 0.09,
+    "fit_mae_mean": 0.033,
+    "comfy_output_gb": 1.4,
+    "ram_peak_gb": 26,
+    "ram_note": "about 26 GB is the scheduler's peak sample for the 21 Oct progressive run; the 23 Oct run ran under a 30 GB reservation",
+    "date": "2026-10-23",
+    "source": "spede_bonsai_verify_bonsai_1023_123253, 23 Oct 2026, UI-driven, ComfyUI 0.41.0, RTX 5090",
+    "pictures": [
+      "progressive_sheet.png",
+      "hero_clean.png"
+    ]
+  }
+}
