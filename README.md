@@ -33,6 +33,17 @@ gives no trustworthy surface, the job fails closed instead of guessing.
   independent fill removes the object in every camera that sees it, rebuilds
   the surface under it, paints that surface from above and fits the fill to
   all the cleaned cameras at once.
+- **Replace turns one generated picture into an object that stands in the
+  scene.** Qwen-Image draws the new object into the scene's own view, so it
+  matches the light and the place. TripoSplat lifts that one picture into
+  Gaussians, and SpEdE turns it to match Qwen's silhouette, sizes it to the
+  old object and stands it on the support plane measured from the scene,
+  with a contact shadow. On a finished Remove it builds on the filled scene.
+- **Extract cuts the object out, not the table with it.** The selection
+  comes from SAM 3.1 in every camera, not one; surface rescue keeps thin
+  parts, the support trim cuts it off at the contact line, and small
+  detached clusters (a railing behind a truck) are dropped. The result is an
+  object-only PLY you can put into another scene.
 
 ## What is in the pack
 
