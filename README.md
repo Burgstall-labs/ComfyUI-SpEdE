@@ -109,14 +109,9 @@ to ComfyUI's `/prompt` yourself.
 - **Python**: ComfyUI's own venv. Development used Python 3.12.3; CI runs
   3.11.
 - **torch** comes from ComfyUI's venv (development: torch 2.9.1+cu130).
-- **gsplat 1.5 or newer, built for your torch and CUDA.**
-  `rasterize_to_indices_in_range` is required for the contributor maps.
-  Development used gsplat 1.5.3 built from source against torch
-  2.9.1+cu130. The generic path is `pip install gsplat`: it compiles its
-  CUDA code on first import and needs an `nvcc` that matches torch's CUDA.
-  The gsplat docs (https://docs.gsplat.studio) list only
-  `pip install gsplat` and the source install; we did not find a
-  prebuilt wheel index for torch 2.9 + CUDA 13.0 there.
+- **gsplat 1.5 or newer, built for your torch and CUDA** — the most likely
+  install problem; see [gsplat](#gsplat-the-dependency-most-likely-to-need-work)
+  below.
 - `pip install -r requirements.txt` (numpy, scipy, Pillow, plyfile,
   gsplat; torch is not listed because it comes from ComfyUI's venv) and,
   for the UI and the SDK runner, `pip install -r studio/requirements.txt`
@@ -130,13 +125,66 @@ to ComfyUI's `/prompt` yourself.
   all-around fill runs under a 30 GB reservation (the progressive fill's
   21 Oct 2026 run peaked at about 26 GB), on top of ComfyUI.
 - **GPU**: an NVIDIA GPU with CUDA; gsplat and every model run on it.
-  **VRAM**: only 32 GB (RTX 5090) has been tested.
+  **VRAM**: only 32 GB (RTX 5090) has been tested. The workflows behind the
+  UI were tuned on that card; with less than 32 GB they will probably need
+  optimising (smaller quantisations of the Qwen-Image and Qwen3-VL weights,
+  ComfyUI's `--lowvram` or other offloading, a smaller working
+  resolution). This has not been tried.
 - **Disk**: about 27 GB of weights for the product path, 3.3 GB more for
   Replace (TripoSplat) and about 43 GB more for the experimental orbit;
   about 1.4–2.1 GB of ComfyUI output per all-around run.
 - **Network at first start**: the UI downloads three.js 0.170.0 and
   GaussianSplats3D 0.4.7 (both MIT) from jsDelivr into `<runs>/viewer`. Its
   pages load the Jost and IBM Plex Mono fonts from Google Fonts.
+
+### Tested environment
+
+SpEdE was developed and tested on **one machine only**: Ubuntu 24.04.5 LTS,
+one NVIDIA RTX 5090 (32 GB), driver 580, CUDA 13.0, Python 3.12.3,
+torch 2.9.1+cu130, gsplat 1.5.3 built from source, ComfyUI 0.41.0. Other
+GPUs, other Linux distributions and Windows have not been tested.
+
+### gsplat: the dependency most likely to need work
+
+SpEdE renders with [gsplat](https://github.com/nerfstudio-project/gsplat)
+and needs `rasterize_to_indices_in_range` (gsplat 1.5 or newer) for the
+contributor maps. gsplat has to match the torch and CUDA of ComfyUI's venv,
+and the pre-compiled wheels do not cover a current ComfyUI: the newest
+wheels on https://docs.gsplat.studio/whl/gsplat/ are gsplat 1.5.3 for
+torch 2.0–2.4, CUDA 11.8–12.4 and Python 3.10 (one Windows wheel,
+torch 2.4 + CUDA 12.4). With a newer torch you build it:
+
+- `pip install gsplat` installs the source and compiles the CUDA code on the
+  first import (JIT); `pip install git+https://github.com/nerfstudio-project/gsplat.git`
+  compiles it during installation. Either needs the CUDA toolkit (`nvcc`)
+  of the same major version as torch's CUDA, and a C++ compiler.
+- Install it with ComfyUI's venv Python, so it builds against that torch.
+- gsplat's own instructions: the [installation section of its README](https://github.com/nerfstudio-project/gsplat#installation)
+  and, for Windows, [docs/INSTALL_WIN.md](https://github.com/nerfstudio-project/gsplat/blob/main/docs/INSTALL_WIN.md).
+  gsplat 1.6 requires torch 2.7 or newer.
+- Check it before starting ComfyUI (the first call may take minutes while it
+  compiles):
+
+  ~~~bash
+  /path/to/ComfyUI/venv/bin/python -c "import torch, gsplat; from gsplat import rasterize_to_indices_in_range; print(torch.__version__, torch.version.cuda, gsplat.__version__)"
+  ~~~
+
+  Then run `gpu_smoke.py` on the demo fixture (see *Scene data*).
+
+### Windows (untested)
+
+Not tested; these are starting points, not instructions we have run.
+
+- With the portable ComfyUI, use its Python for every command:
+  `python_embeded\python.exe -m pip install -r requirements.txt -r studio\requirements.txt`.
+- gsplat: build it as in gsplat's [INSTALL_WIN.md](https://github.com/nerfstudio-project/gsplat/blob/main/docs/INSTALL_WIN.md)
+  (Visual Studio Build Tools and the CUDA toolkit that matches ComfyUI's
+  torch), from a *x64 Native Tools* prompt.
+- In `studio/config.json` write paths with forward slashes or doubled
+  backslashes.
+- The UI runs gsplat in subprocesses and reads ComfyUI's `output/` folder;
+  if anything breaks, it is most likely there. WSL2 with Ubuntu is the
+  closer match to the tested setup.
 
 ## Install
 
