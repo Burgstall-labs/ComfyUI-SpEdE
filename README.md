@@ -1,5 +1,7 @@
 # SpEdE — Splat Edit Engine for ComfyUI
 
+[![Run on swm cloud](https://img.shields.io/badge/swm%20cloud-Run%20SpEdE%203D%20Splat%20Editor-0A84FF?logo=icloud&logoColor=white)](https://cloud.swmgpu.com/w/samofvaani/sam3-1-spede-3d-splat-editor)
+
 Point at an object in a Gaussian-splat scene and ComfyUI takes it out: SAM 3.1
 finds it in every capture camera, a visual hull collects its Gaussians and
 deletes them, Qwen-Image 2.1 paints the surface the object hid, MoGe-3
@@ -100,6 +102,7 @@ to ComfyUI's `/prompt` yourself.
 
 ## Requirements
 
+- **1-click cloud GPU (no local build required):** Launch the pre-configured [SAM 3.1 Video Multiplex Tracking & SpEdE 3D Gaussian Splat Object Editor on **swm cloud**](https://cloud.swmgpu.com/w/samofvaani/sam3-1-spede-3d-splat-editor) with `ComfyUI-SpEdE`, `gsplat`, `SAM 3.1`, `MoGe-3`, `Qwen-Image-2.1`, and the 8-camera demo splat scene pre-installed.
 - **ComfyUI 0.37 or newer** for the core nodes used: SAM3 *Image
   Segmentation*, Qwen-Image 2.1 with *QwenImage21Cache*, *TextGenerate*,
   *LoadMoGeModel* / *MoGeInference*. **Tested on ComfyUI 0.41.0.** The
